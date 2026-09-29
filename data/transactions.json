@@ -1,0 +1,10 @@
+[
+                         {
+                             "id":  "tx_test_1",
+                             "amount":  15.5,
+                             "note":  "Test Coffee",
+                             "type":  "expense",
+                             "date":  "2026-09-17",
+                             "category":  "food"
+                         }
+                     ]

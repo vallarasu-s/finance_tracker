@@ -1,0 +1,158 @@
+:root {
+  /* Font Families - Apple San Francisco (SF Pro) */
+  --font-main: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'SF Pro', 'San Francisco', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, 'JetBrains Mono', monospace;
+
+  /* Color Accents (FOGO FinTech Palette) */
+  --color-brand: #2f65f6;
+  --color-brand-hover: #1e4fd8;
+  --color-brand-active: #1742be;
+  --color-brand-light: #eff4ff;
+  --color-brand-glow: rgba(47, 101, 246, 0.25);
+  --color-navy: #1e3a8a;
+  --color-navy-dark: #172554;
+  --color-cyan: #06b6d4;
+  --color-cyan-light: #ecfeff;
+  
+  --color-income: #10b981;
+  --color-income-hover: #059669;
+  --color-income-bg: #ecfdf5;
+  --color-income-glow: rgba(16, 185, 129, 0.2);
+
+  --color-expense: #ef4444;
+  --color-expense-hover: #dc2626;
+  --color-expense-bg: #fef2f2;
+  --color-expense-glow: rgba(239, 68, 68, 0.2);
+
+  --color-goal: #3b82f6;
+  --color-goal-bg: #eff6ff;
+  --color-goal-glow: rgba(59, 130, 246, 0.2);
+
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+
+  --color-purple: #8b5cf6;
+  --color-purple-bg: #f5f3ff;
+
+  /* Radii (Modern Soft FinTech Curves) */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Primary Light Theme (FOGO Aesthetic Default) */
+  --bg-app: #f4f6fa;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafbfc;
+  --bg-elevated: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-glass-input: #f8fafc;
+  --bg-input: #f8fafc;
+
+  --border-subtle: #edf2f7;
+  --border-medium: #e2e8f0;
+  --border-focus: #2f65f6;
+
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 18px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.02);
+  --shadow-lg: 0 12px 30px -4px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 25px -4px rgba(47, 101, 246, 0.22);
+
+  --scrollbar-thumb: rgba(148, 163, 184, 0.3);
+  --scrollbar-track: rgba(241, 245, 249, 0.6);
+}
+
+/* Dark Theme Variant - Pure AMOLED Black & Graphite Surfaces (ColorOS / OxygenOS / iOS Dark Style) */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Deep AMOLED Pitch Black & Charcoal Graphite Surfaces */
+  --bg-app: #000000;
+  --bg-sidebar: #09090b;
+  --bg-card: #18181b;
+  --bg-card-hover: #222226;
+  --bg-elevated: #1c1c1e;
+  --bg-glass: rgba(24, 24, 27, 0.95);
+  --bg-glass-input: rgba(28, 28, 30, 0.95);
+  --bg-input: #1c1c1e;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-focus: #3b82f6;
+
+  /* High-Contrast Crisp Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #8e8e93;
+  --text-muted: #71717a;
+  --text-muted-dark: #52525b;
+  --text-inverse: #000000;
+
+  /* Dedicated Metric & Highlight Accents */
+  --text-emerald: #34c759;
+  --text-emerald-bright: #22c55e;
+  --text-emerald-light: #86efac;
+  --text-amber: #ff9500;
+  --text-amber-bright: #fbbf24;
+  --text-orange: #f97316;
+  
+  /* Luminous Gradients */
+  --text-aurora-gradient: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  --text-emerald-gradient: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #34c759 100%);
+  --text-amber-gradient: linear-gradient(135deg, #fef08a 0%, #fbbf24 50%, #ff9500 100%);
+  --text-orange-gradient: linear-gradient(135deg, #fed7aa 0%, #f97316 50%, #ea580c 100%);
+
+  /* Soft Ambient Glows */
+  --letter-glow-emerald: 0 0 12px rgba(52, 199, 89, 0.25);
+  --letter-glow-amber: 0 0 12px rgba(255, 149, 0, 0.25);
+  --letter-glow-orange: 0 0 12px rgba(244, 63, 94, 0.25);
+
+  /* Modern Vivid Blue Accent */
+  --color-brand: #2f65f6;
+  --color-brand-hover: #3b82f6;
+  --color-brand-active: #1d4ed8;
+  --color-brand-light: rgba(47, 101, 246, 0.16);
+  --color-brand-glow: rgba(47, 101, 246, 0.25);
+
+  --color-income: #34c759;
+  --color-income-hover: #2db34f;
+  --color-income-bg: rgba(52, 199, 89, 0.15);
+  --color-income-glow: rgba(52, 199, 89, 0.25);
+
+  --color-expense: #ff453a;
+  --color-expense-hover: #e03b30;
+  --color-expense-bg: rgba(255, 69, 58, 0.15);
+  --color-expense-glow: rgba(255, 69, 58, 0.25);
+
+  --color-goal: #0a84ff;
+  --color-goal-bg: rgba(10, 132, 255, 0.15);
+  --color-goal-glow: rgba(10, 132, 255, 0.25);
+
+  --color-warning: #ff9f0a;
+  --color-warning-bg: rgba(255, 159, 10, 0.15);
+
+  --color-purple: #bf5af2;
+  --color-purple-bg: rgba(191, 90, 242, 0.15);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.85);
+  --shadow-glow: none;
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.18);
+  --scrollbar-track: #000000;
+}

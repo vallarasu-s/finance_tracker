@@ -1,0 +1,16 @@
+{
+  "name": "Finance Manager",
+  "short_name": "FinanceManager",
+  "description": "Offline-first personal finance manager with daily expenses, income, and financial goals",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#10b981",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
