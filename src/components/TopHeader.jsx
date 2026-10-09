@@ -1,18 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Menu, 
   Search, 
   Bell, 
   Settings as SettingsIcon, 
-  ChevronDown,
-  Coins,
-  Check,
-  Globe,
   HelpCircle,
   Sun,
   Moon
 } from 'lucide-react';
-import { CURRENCIES } from '../services/storage';
 import NotificationDropdown from './NotificationDropdown';
 
 export default function TopHeader({
@@ -27,7 +22,6 @@ export default function TopHeader({
   searchQuery,
   onSearchChange,
   settings = {},
-  onUpdateCurrency,
   todos = [],
   appUpdates = [],
   onToggleTodo,
@@ -38,55 +32,20 @@ export default function TopHeader({
   onNavigateTab,
   onToggleTheme
 }) {
-  const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
-  const [currencySearch, setCurrencySearch] = useState('');
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-
-  const currencyDropdownRef = useRef(null);
-
-  // Active currency details
-  const activeCurrencyCode = settings.currency || 'USD';
-  const activeCurrency = CURRENCIES.find(c => c.code === activeCurrencyCode) || CURRENCIES[0];
 
   // Unfinished todos & unread app updates count
   const unfinishedTodosCount = todos.filter(t => !t.completed).length;
   const unreadUpdatesCount = appUpdates.filter(u => !u.read).length;
   const totalNotifications = unfinishedTodosCount + unreadUpdatesCount;
 
-  // Filter currencies by search
-  const filteredCurrencies = CURRENCIES.filter(c => {
-    if (!currencySearch.trim()) return true;
-    const q = currencySearch.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.country.toLowerCase().includes(q) ||
-      c.code.toLowerCase().includes(q) ||
-      c.symbol.toLowerCase().includes(q)
-    );
-  });
-
-  // Close currency dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(e.target)) {
-        setIsCurrencyDropdownOpen(false);
-      }
-    }
-    if (isCurrencyDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isCurrencyDropdownOpen]);
-
   // Determine title based on active tab
   const getPageTitle = () => {
     switch (activeTab) {
       case 'dashboard':
-        return 'Financial Dashboard';
+        return 'Financial Tracker';
       case 'transactions':
-        return 'Daily Transactions Tracker';
+        return 'Transactions Tracker';
       case 'analytics':
         return 'Analytics & Spending Trends';
       case 'goals':
@@ -94,7 +53,7 @@ export default function TopHeader({
       case 'help':
         return 'Help Center & Documentation';
       default:
-        return 'Financial Dashboard';
+        return 'Financial Tracker';
     }
   };
 
@@ -120,7 +79,7 @@ export default function TopHeader({
         <h1 className="top-header-page-title">{getPageTitle()}</h1>
       </div>
 
-      {/* Right side: Search, Currency Switcher, Notifications, User Profile */}
+      {/* Right side: Search, Notifications, User Profile, Quick Actions */}
       <div className="top-header-right">
         {/* Search Pill Input */}
         <div className="top-header-search">
@@ -132,75 +91,6 @@ export default function TopHeader({
             value={searchQuery || ''}
             onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
           />
-        </div>
-
-        {/* Global Country Currency Switcher Pill */}
-        <div className="top-header-currency-wrapper" ref={currencyDropdownRef}>
-          <button
-            type="button"
-            className={`top-header-currency-pill ${isCurrencyDropdownOpen ? 'active' : ''}`}
-            onClick={() => setIsCurrencyDropdownOpen(prev => !prev)}
-            title={`Active Currency: ${activeCurrency.country} (${activeCurrency.code} ${activeCurrency.symbol}) - Click to Change`}
-            aria-label="Select Country Currency"
-            aria-expanded={isCurrencyDropdownOpen}
-          >
-            <span className="currency-flag">{activeCurrency.flag}</span>
-            <span className="currency-code">{activeCurrency.code}</span>
-            <span className="currency-symbol-badge">{activeCurrency.symbol}</span>
-            <ChevronDown size={14} className={`currency-chevron ${isCurrencyDropdownOpen ? 'rotate' : ''}`} />
-          </button>
-
-          {/* Quick Currency Selector Dropdown */}
-          {isCurrencyDropdownOpen && (
-            <div className="fogo-currency-popover">
-              <div className="popover-header">
-                <div className="popover-header-row">
-                  <Globe size={15} />
-                  <span className="popover-title">Select Country Currency</span>
-                </div>
-                <div className="popover-search-box">
-                  <Search size={14} />
-                  <input
-                    type="text"
-                    placeholder="Search country or currency..."
-                    value={currencySearch}
-                    onChange={(e) => setCurrencySearch(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="popover-currency-list">
-                {filteredCurrencies.map(c => (
-                  <button
-                    key={c.code}
-                    type="button"
-                    className={`popover-currency-item ${c.code === activeCurrencyCode ? 'selected' : ''}`}
-                    onClick={() => {
-                      if (onUpdateCurrency) {
-                        onUpdateCurrency(c.code, c.symbol);
-                      }
-                      setIsCurrencyDropdownOpen(false);
-                      setCurrencySearch('');
-                    }}
-                  >
-                    <span className="item-flag">{c.flag}</span>
-                    <div className="item-meta">
-                      <span className="item-country">{c.country}</span>
-                      <span className="item-name">{c.name}</span>
-                    </div>
-                    <span className="item-code-symbol">
-                      <span className="item-code">{c.code}</span>
-                      <span className="item-symbol">{c.symbol}</span>
-                    </span>
-                    {c.code === activeCurrencyCode && (
-                      <Check size={16} className="item-check" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Notification Bell with Dynamic Counter (App Updates & Unfinished Todos only) */}
@@ -275,6 +165,7 @@ export default function TopHeader({
         >
           {settings?.theme === 'dark' ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="#64748b" />}
         </button>
+
 
         {/* Help & Support Button */}
         <button

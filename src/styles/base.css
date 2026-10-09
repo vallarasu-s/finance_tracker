@@ -49,7 +49,7 @@ body {
 }
 .letter-gradient-aurora {
   background: var(--text-aurora-gradient);
-  -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .letter-glow-emerald {

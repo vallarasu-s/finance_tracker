@@ -133,8 +133,8 @@ export default function HelpModal({
   // FAQ items data
   const faqs = [
     {
-      q: 'What is the purpose of the "Revenue and Expenses Over Time" chart, and what should I do with it?',
-      a: 'The "Revenue and Expenses Over Time" chart visually tracks incoming revenue against outgoing expenses. Purpose: To monitor whether you are cash-flow positive and detect spending surges across weeks, months, or years. What to do: 1) Switch timeframes (This week, This month, This year) to identify patterns; 2) Ensure the green revenue wave stays higher than the blue/amber expense curve; 3) Hover over points to view exact amounts; 4) Transfer surplus earnings directly into your Financial Goals.',
+      q: 'What is the purpose of the "Profit and Loss" chart, and what should I do with it?',
+      a: 'The "Profit and Loss" chart visually tracks incoming revenue against outgoing expenses. Purpose: To monitor whether you are cash-flow positive and detect spending surges across days, months, or years. What to do: 1) Switch timeframes (Monthly, Daily, Yearly) to identify patterns; 2) Ensure the green profit bars stay higher than the red loss bars; 3) Hover over any bar to view exact net margins; 4) Transfer surplus earnings directly into your Financial Goals.',
       category: 'revenue-chart'
     },
     {

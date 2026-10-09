@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { CATEGORIES } from '../services/storage';
+import { X, Calendar, ChevronLeft, ChevronRight, Calculator } from 'lucide-react';
+import { CATEGORIES, PAYMENT_METHODS, getCategoryInfo } from '../services/storage';
+import MobileAmountKeypad from './MobileAmountKeypad';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES = [
@@ -20,9 +21,50 @@ export default function TransactionModal({
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [category, setCategory] = useState('food');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [note, setNote] = useState('');
+
+  // Keypad & Currency state
+  const [currencySymbol, setCurrencySymbol] = useState(settings?.currencySymbol || '₹');
+  const [isKeypadOpen, setIsKeypadOpen] = useState(false);
+  const [keypadTab, setKeypadTab] = useState('amount'); // 'amount' | 'category'
+
+  // Combined categories for display
+  const allCategories = useMemo(() => {
+    return [...(CATEGORIES.expense || []), ...(CATEGORIES.income || [])];
+  }, []);
+
+  const currentCategoryMeta = useMemo(() => {
+    return allCategories.find(c => c.id === category) || getCategoryInfo(category, type);
+  }, [allCategories, category, type]);
+
+  const selectedCategoryColor = currentCategoryMeta?.color || (type === 'income' ? '#10B981' : '#EF4444');
+
+  // Strictly Mobile View Only: screen width <= 768px (never laptop or PC)
+  const [isMobileDevice, setIsMobileDevice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileDevice(typeof window !== 'undefined' && window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+
+  useEffect(() => {
+    if (settings?.currencySymbol) {
+      setCurrencySymbol(settings.currencySymbol);
+    }
+  }, [settings?.currencySymbol]);
 
   // Helper for current HH:MM in local time
   const getNowTime = () => {
@@ -58,6 +100,7 @@ export default function TransactionModal({
       );
       setRecipient(editingTransaction.recipient || '');
       setCategory(editingTransaction.category || (editingTransaction.type === 'income' ? 'salary' : 'food'));
+      setPaymentMethod(editingTransaction.paymentMethod || 'cash');
       setDate(editingTransaction.date || new Date().toISOString().split('T')[0]);
       setTime(editingTransaction.time || getNowTime());
       setNote(editingTransaction.note || '');
@@ -66,11 +109,13 @@ export default function TransactionModal({
       setAmount('');
       setRecipient('');
       setCategory(initialType === 'income' ? 'salary' : 'food');
+      setPaymentMethod('cash');
       setDate(new Date().toISOString().split('T')[0]);
       setTime(getNowTime());
       setNote('');
     }
     setIsDatePickerOpen(false);
+    setIsKeypadOpen(false);
   }, [editingTransaction, initialType, isOpen]);
 
   // Sync picker viewed year/month with current parsed date
@@ -171,7 +216,6 @@ export default function TransactionModal({
 
   const handleTypeChange = (newType) => {
     setType(newType);
-    // When switching types, if current category belongs to the other type, switch to sensible default category
     const isCurrentlyIncome = CATEGORIES.income.some(c => c.id === category);
     const isCurrentlyExpense = CATEGORIES.expense.some(c => c.id === category);
 
@@ -186,7 +230,6 @@ export default function TransactionModal({
     const selectedCategory = e.target.value;
     setCategory(selectedCategory);
 
-    // Automatically synchronize Type (Income or Expense) based on category chosen
     const isIncome = CATEGORIES.income.some(c => c.id === selectedCategory);
     const isExpense = CATEGORIES.expense.some(c => c.id === selectedCategory);
 
@@ -202,6 +245,9 @@ export default function TransactionModal({
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
       alert('Please enter a valid amount greater than zero.');
+      if (isMobileDevice) {
+        setIsKeypadOpen(true);
+      }
       return;
     }
 
@@ -209,29 +255,71 @@ export default function TransactionModal({
       ...(editingTransaction ? { id: editingTransaction.id } : {}),
       type,
       amount: numAmount,
-      recipient: recipient.trim(),
+      recipient: recipient ? recipient.trim() : (editingTransaction?.recipient || ''),
       category: category || (type === 'income' ? 'salary' : 'food'),
+      paymentMethod: paymentMethod || 'cash',
       date: date || new Date().toISOString().split('T')[0],
       time: time || getNowTime(),
       note: note.trim(),
-      paymentMethod: editingTransaction?.paymentMethod || 'bank',
     });
+  };
+
+  // Open the custom keypad or category pad strictly on mobile view (width <= 768px). Never on laptop / PC.
+  const handleAmountFocusOrClick = (e) => {
+    if (isMobileDevice) {
+      if (e && e.target && e.target.blur) {
+        e.target.blur();
+      }
+      setKeypadTab('amount');
+      setIsKeypadOpen(true);
+    } else {
+      setIsKeypadOpen(false);
+    }
+  };
+
+  const handleCategoryMobileClick = (e) => {
+    if (isMobileDevice) {
+      if (e && e.target && e.target.blur) {
+        e.target.blur();
+      }
+      setKeypadTab('category');
+      setIsKeypadOpen(true);
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
-        className="add-tx-modal-dialog" 
+        className={`add-tx-modal-dialog ${isMobileDevice && isKeypadOpen ? 'keypad-active' : ''}`} 
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-tx-modal-title"
       >
+
+
         {/* Header */}
         <div className="add-tx-header">
-          <h2 id="add-tx-modal-title" className="add-tx-title">
-            {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <h2 id="add-tx-modal-title" className="add-tx-title">
+              {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
+            </h2>
+            {currentCategoryMeta && (
+              <span 
+                className="add-tx-header-cat-pill"
+                style={{
+                  background: `${selectedCategoryColor}18`,
+                  color: selectedCategoryColor,
+                  border: `1px solid ${selectedCategoryColor}40`,
+                  boxShadow: `0 2px 8px ${selectedCategoryColor}20`,
+                  transition: 'all 0.25s ease'
+                }}
+              >
+                <span>{currentCategoryMeta?.icon}</span>
+                <span>{currentCategoryMeta?.name}</span>
+              </span>
+            )}
+          </div>
           <button 
             type="button" 
             className="add-tx-close-btn" 
@@ -270,76 +358,198 @@ export default function TransactionModal({
               <label className="add-tx-label" htmlFor="tx-amount">Amount</label>
               <input
                 id="tx-amount"
-                type="number"
+                type={isMobileDevice ? "text" : "number"}
                 step="any"
                 min="0.01"
                 required
-                autoFocus
+                autoFocus={!isMobileDevice}
+                readOnly={isMobileDevice}
                 className="add-tx-input add-tx-amount-input"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                onFocus={handleAmountFocusOrClick}
+                onClick={handleAmountFocusOrClick}
+                inputMode={isMobileDevice ? "none" : undefined}
+                style={{ cursor: isMobileDevice ? 'pointer' : 'text' }}
               />
             </div>
           </div>
 
-          {/* Row 2: Recipient / Source */}
-          <div className="add-tx-field">
-            <label className="add-tx-label" htmlFor="tx-recipient">Recipient / Source</label>
-            <input
-              id="tx-recipient"
-              type="text"
-              className="add-tx-input"
-              placeholder="e.g. Employer"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-            />
-          </div>
 
           {/* Row 3: Category */}
           <div className="add-tx-field">
-            <label className="add-tx-label" htmlFor="tx-category">Category</label>
-            <div className="add-tx-select-wrapper">
-              <select
-                id="tx-category"
-                className="add-tx-select"
-                value={category}
-                onChange={handleCategoryChange}
-                required
-              >
-                {type === 'expense' ? (
-                  <>
-                    <optgroup label="Expense Categories">
-                      {CATEGORIES.expense.filter(c => c.id !== 'groceries').map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Income Categories">
-                      {CATEGORIES.income.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </optgroup>
-                  </>
-                ) : (
-                  <>
-                    <optgroup label="Income Categories">
-                      {CATEGORIES.income.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Expense Categories">
-                      {CATEGORIES.expense.filter(c => c.id !== 'groceries').map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </optgroup>
-                  </>
-                )}
-              </select>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+              <label className="add-tx-label" htmlFor="tx-category" style={{ margin: 0 }}>Category</label>
+              {currentCategoryMeta && (
+                <span 
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 650,
+                    color: selectedCategoryColor,
+                    background: `${selectedCategoryColor}14`,
+                    border: `1px solid ${selectedCategoryColor}35`,
+                    padding: '0.12rem 0.55rem',
+                    borderRadius: 'var(--radius-full)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    transition: 'all 0.25s ease'
+                  }}
+                >
+                  <span>{currentCategoryMeta?.icon}</span>
+                  <span>{currentCategoryMeta?.name}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Quick Category Color Chips for Desktop */}
+            {!isMobileDevice && (
+              <div className="add-tx-category-chips-grid">
+                {(type === 'income' ? CATEGORIES.income : CATEGORIES.expense.filter(c => c.id !== 'groceries')).map((cat) => {
+                  const isSelected = category === cat.id;
+                  const catColor = cat.color || '#6366F1';
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`add-tx-cat-chip ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setCategory(cat.id)}
+                      style={isSelected ? {
+                        borderColor: catColor,
+                        background: `${catColor}18`,
+                        color: 'var(--text-primary)',
+                        boxShadow: `0 2px 10px ${catColor}30`,
+                        borderWidth: '1.5px'
+                      } : {
+                        borderColor: 'var(--border-subtle)',
+                        background: 'var(--bg-app)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = `${catColor}70`;
+                          e.currentTarget.style.background = `${catColor}0d`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                          e.currentTarget.style.background = 'var(--bg-app)';
+                        }
+                      }}
+                      title={cat.name}
+                    >
+                      <span 
+                        className="add-tx-cat-chip-icon"
+                        style={{
+                          background: `${catColor}18`,
+                          border: `1px solid ${catColor}35`
+                        }}
+                      >
+                        {cat.icon}
+                      </span>
+                      <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {cat.name}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div 
+              className="add-tx-select-wrapper"
+              style={{
+                borderLeft: `4px solid ${selectedCategoryColor}`,
+                borderRadius: '8px',
+                transition: 'border-color 0.25s ease'
+              }}
+            >
+              {isMobileDevice ? (
+                <button
+                  type="button"
+                  id="tx-category"
+                  className="add-tx-select add-tx-category-trigger-btn"
+                  onClick={handleCategoryMobileClick}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '1.15rem' }}>{currentCategoryMeta?.icon || '🏷️'}</span>
+                    <span style={{ fontWeight: 600, color: selectedCategoryColor }}>{currentCategoryMeta?.name || category}</span>
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▼</span>
+                </button>
+              ) : (
+                <select
+                  id="tx-category"
+                  className="add-tx-select"
+                  value={category}
+                  onChange={handleCategoryChange}
+                  required
+                >
+                  {type === 'expense' ? (
+                    <>
+                      <optgroup label="Expense Categories">
+                        {CATEGORIES.expense.filter(c => c.id !== 'groceries').map(c => (
+                          <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Income Categories">
+                        {CATEGORIES.income.map(c => (
+                          <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                      </optgroup>
+                    </>
+                  ) : (
+                    <>
+                      <optgroup label="Income Categories">
+                        {CATEGORIES.income.map(c => (
+                          <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Expense Categories">
+                        {CATEGORIES.expense.filter(c => c.id !== 'groceries').map(c => (
+                          <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                      </optgroup>
+                    </>
+                  )}
+                </select>
+              )}
             </div>
           </div>
 
-          {/* Row 4: Date and Time */}
-          <div className="add-tx-row-2col">
+          {/* Row 4: Payment Method */}
+          <div className="add-tx-field">
+            <label className="add-tx-label">Payment Method</label>
+            <div className="add-tx-pm-grid">
+              {PAYMENT_METHODS.map((pm) => {
+                const isSelected = paymentMethod === pm.id;
+                return (
+                  <button
+                    key={pm.id}
+                    type="button"
+                    className={`add-tx-pm-chip ${isSelected ? 'active' : ''}`}
+                    onClick={() => setPaymentMethod(pm.id)}
+                    title={`Pay via ${pm.name}`}
+                  >
+                    <span className="add-tx-pm-icon">{pm.icon}</span>
+                    <span className="add-tx-pm-name">{pm.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Row 5: Date and Time */}
+          <div className="add-tx-row-2col add-tx-date-time-row">
             <div className="add-tx-field add-tx-date-field" ref={datePickerRef}>
               <div className="add-tx-time-label-row">
                 <label className="add-tx-label" htmlFor="tx-date">Date</label>
@@ -511,7 +721,7 @@ export default function TransactionModal({
             </div>
           </div>
 
-          {/* Row 4: Notes */}
+          {/* Row 6: Notes */}
           <div className="add-tx-field">
             <label className="add-tx-label" htmlFor="tx-notes">Notes</label>
             <input
@@ -541,6 +751,28 @@ export default function TransactionModal({
             </button>
           </div>
         </form>
+
+        {/* Custom Numeric Keypad & Category Pad Sheet - Strictly Mobile View Only */}
+        {isMobileDevice && (
+          <MobileAmountKeypad
+            isOpen={isKeypadOpen}
+            activeTab={keypadTab}
+            onTabChange={(tab) => setKeypadTab(tab)}
+            amount={amount}
+            onChange={(newAmt) => setAmount(newAmt)}
+            category={category}
+            onCategoryChange={(newCat) => setCategory(newCat)}
+            type={type}
+            onTypeChange={(newType) => setType(newType)}
+            currencySymbol={currencySymbol}
+            onCurrencyChange={(sym) => setCurrencySymbol(sym)}
+            onDone={(finalAmt) => {
+              setAmount(finalAmt);
+              setIsKeypadOpen(false);
+            }}
+            onClose={() => setIsKeypadOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

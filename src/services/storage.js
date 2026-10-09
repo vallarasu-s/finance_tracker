@@ -71,33 +71,138 @@ export const DEFAULT_SETTINGS = {
 
 export const CATEGORIES = {
   expense: [
-    { id: 'food', name: 'Food & Grocery', icon: '🛒', color: '#10B981' },
-    { id: 'groceries', name: 'Groceries', icon: '🛒', color: '#10B981' },
-    { id: 'transport', name: 'Transport & Fuel', icon: '🚗', color: '#3B82F6' },
-    { id: 'housing', name: 'Rent & Housing', icon: '🏠', color: '#6366F1' },
-    { id: 'utilities', name: 'Bills & Utilities', icon: '⚡', color: '#EAB308' },
-    { id: 'shopping', name: 'Shopping & Gear', icon: '🛍️', color: '#EC4899' },
-    { id: 'entertainment', name: 'Entertainment', icon: '🎬', color: '#8B5CF6' },
-    { id: 'health', name: 'Health & Fitness', icon: '💊', color: '#EF4444' },
-    { id: 'education', name: 'Education & Books', icon: '📚', color: '#06B6D4' },
-    { id: 'other_exp', name: 'Other Expense', icon: '📦', color: '#64748B' },
+    { id: 'food', name: 'Eat Hotel', icon: '🍜', color: '#F97316' },
+    { id: 'social', name: 'Social Life', icon: '🧑‍🤝‍🧑', color: '#EC4899' },
+    { id: 'pets', name: 'Pets', icon: '🐶', color: '#B45309' },
+    { id: 'transport', name: 'Transport', icon: '🚕', color: '#2563EB' },
+    { id: 'home_appliances', name: 'Home Appliances', icon: '🔌', color: '#0284C7' },
+    { id: 'cooking_products', name: 'Cooking Products', icon: '🍳', color: '#DC2626' },
+    { id: 'beauty', name: 'Beauty', icon: '💄', color: '#F43F5E' },
+    { id: 'health', name: 'Health', icon: '🧘', color: '#0D9488' },
+    { id: 'education', name: 'Education', icon: '📙', color: '#EAB308' },
+    { id: 'gift', name: 'Gift', icon: '🎁', color: '#C026D3' },
+    { id: 'other_exp', name: 'Other', icon: '📦', color: '#64748B' },
+    // Retain legacy IDs for backward compatibility with existing transactions:
+    { id: 'housing', name: 'Rent & Housing', icon: '🏠', color: '#1E3A8A' },
+    { id: 'utilities', name: 'Bills & Utilities', icon: '⚡', color: '#D97706' },
+    { id: 'shopping', name: 'Shopping & Gear', icon: '🛍️', color: '#BE185D' },
+    { id: 'entertainment', name: 'Entertainment', icon: '🎬', color: '#7C3AED' },
+    { id: 'groceries', name: 'Groceries', icon: '🛒', color: '#84CC16' },
   ],
   income: [
     { id: 'salary', name: 'Salary & Wages', icon: '💼', color: '#10B981' },
     { id: 'freelance', name: 'Freelance & Client', icon: '💻', color: '#06B6D4' },
-    { id: 'investment', name: 'Investments & Dividends', icon: '📈', color: '#8B5CF6' },
-    { id: 'bonus', name: 'Bonus & Incentives', icon: '🎁', color: '#F59E0B' },
-    { id: 'rental', name: 'Rental Income', icon: '🏢', color: '#3B82F6' },
-    { id: 'other_inc', name: 'Other Income', icon: '💰', color: '#14B8A6' },
+    { id: 'investment', name: 'Investments & Dividends', icon: '📈', color: '#4338CA' },
+    { id: 'bonus', name: 'Bonus & Incentives', icon: '🎁', color: '#FBBF24' },
+    { id: 'rental', name: 'Rental Income', icon: '🏢', color: '#8B5CF6' },
+    { id: 'other_inc', name: 'Other Income', icon: '💰', color: '#059669' },
   ]
 };
 
-export const PAYMENT_METHODS = [
-  { id: 'cash', name: 'Cash', icon: '💵' },
-  { id: 'card', name: 'Credit/Debit Card', icon: '💳' },
-  { id: 'bank', name: 'Bank / UPI Transfer', icon: '🏦' },
-  { id: 'wallet', name: 'Digital Wallet', icon: '📱' },
+export const MOBILE_KEYPAD_EXPENSE_CATEGORIES = [
+  { id: 'food', name: 'Eat Hotel', icon: '🍜', color: '#F97316' },
+  { id: 'social', name: 'Social Life', icon: '🧑‍🤝‍🧑', color: '#EC4899' },
+  { id: 'pets', name: 'Pets', icon: '🐶', color: '#B45309' },
+  { id: 'transport', name: 'Transport', icon: '🚕', color: '#2563EB' },
+  { id: 'home_appliances', name: 'Home Appliances', icon: '🔌', color: '#0284C7' },
+  { id: 'cooking_products', name: 'Cooking Products', icon: '🍳', color: '#DC2626' },
+  { id: 'beauty', name: 'Beauty', icon: '💄', color: '#F43F5E' },
+  { id: 'health', name: 'Health', icon: '🧘', color: '#0D9488' },
+  { id: 'education', name: 'Education', icon: '📙', color: '#EAB308' },
+  { id: 'gift', name: 'Gift', icon: '🎁', color: '#C026D3' },
+  { id: 'other_exp', name: 'Other', icon: '📦', color: '#64748B' },
 ];
+
+export const PAYMENT_METHODS = [
+  { id: 'cash', name: 'Cash', icon: '💵', label: 'Cash' },
+  { id: 'upi', name: 'UPI', icon: '⚡', label: 'UPI / QR' },
+  { id: 'bank', name: 'Bank Transfer', icon: '🏦', label: 'Bank' },
+  { id: 'card', name: 'Credit Card', icon: '💳', label: 'Card' },
+];
+
+export function getPaymentMethodInfo(methodId) {
+  const normalized = (methodId || '').toLowerCase().trim();
+  if (normalized === 'upi') return { id: 'upi', name: 'UPI', icon: '⚡', label: 'UPI / QR' };
+  if (normalized === 'cash') return { id: 'cash', name: 'Cash', icon: '💵', label: 'Cash' };
+  if (normalized === 'bank' || normalized === 'netbanking' || normalized === 'transfer' || normalized === 'bank transfer') {
+    return { id: 'bank', name: 'Bank Transfer', icon: '🏦', label: 'Bank' };
+  }
+  if (normalized === 'card' || normalized === 'credit_card' || normalized === 'credit card' || normalized === 'debit_card') {
+    return { id: 'card', name: 'Credit Card', icon: '💳', label: 'Card' };
+  }
+  if (normalized === 'wallet') return { id: 'wallet', name: 'Digital Wallet', icon: '📱', label: 'Wallet' };
+  return { id: methodId || 'cash', name: methodId || 'Cash', icon: '💵', label: methodId || 'Cash' };
+}
+
+// Curated palette of diverse, vibrant hues ensuring unknown/custom categories never clash
+const DIVERSE_CATEGORY_PALETTE = [
+  '#8B5CF6', '#F97316', '#2563EB', '#10B981', '#EC4899',
+  '#06B6D4', '#EAB308', '#84CC16', '#DC2626', '#0D9488',
+  '#7C3AED', '#D97706', '#0284C7', '#BE185D', '#4338CA', '#059669'
+];
+
+// Fallback metadata for removed/legacy category IDs so historical records preserve icons and titles
+export const LEGACY_FALLBACK_CATEGORIES = [
+  { id: 'culture', name: 'Culture', icon: '🖼️', color: '#6366F1' },
+  { id: 'household', name: 'Household', icon: '🪑', color: '#0284C7' },
+  { id: 'apparel', name: 'Apparel', icon: '🧥', color: '#DC2626' },
+  { id: 'home_appliances_cooking', name: 'Home Appliances & Cooking Products', icon: '🍳', color: '#0284C7' },
+  { id: 'housing', name: 'Rent & Housing', icon: '🏠', color: '#1E3A8A' },
+  { id: 'groceries', name: 'Groceries', icon: '🛒', color: '#84CC16' },
+];
+
+export function getCategoryInfo(categoryId, type = null) {
+  const allCats = [...(CATEGORIES.expense || []), ...(CATEGORIES.income || [])];
+  const normalized = String(categoryId || '').toLowerCase().trim();
+  
+  // 1. Direct ID match
+  let found = allCats.find(c => c.id === categoryId);
+  if (found) return found;
+
+  // 2. Case-insensitive or name match (e.g. "Rental Income", "transport", "salary")
+  found = allCats.find(c => 
+    c.id.toLowerCase() === normalized || 
+    c.name.toLowerCase() === normalized ||
+    c.id.replace(/[_-]/g, '') === normalized.replace(/[\s_-]/g, '')
+  );
+  if (found) return found;
+
+  // 3. Fallback check for deprecated/legacy categories
+  found = LEGACY_FALLBACK_CATEGORIES.find(c => 
+    c.id === categoryId ||
+    c.id.toLowerCase() === normalized ||
+    c.name.toLowerCase() === normalized
+  );
+  if (found) return found;
+
+  // 4. User custom categories in localStorage
+  try {
+    const custom = JSON.parse(localStorage.getItem('finance_user_custom_categories') || '[]');
+    const customFound = custom.find(c => 
+      c.id === categoryId || 
+      c.id.toLowerCase() === normalized || 
+      (c.name && c.name.toLowerCase() === normalized)
+    );
+    if (customFound) return customFound;
+  } catch (e) {}
+
+  // 5. Deterministic distinct color based on categoryId string hash
+  // This guarantees that DIFFERENT categories ALWAYS receive DIFFERENT colors
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = (hash << 5) - hash + normalized.charCodeAt(i);
+    hash |= 0;
+  }
+  const colorIndex = Math.abs(hash) % DIVERSE_CATEGORY_PALETTE.length;
+  const distinctColor = DIVERSE_CATEGORY_PALETTE[colorIndex];
+
+  return {
+    id: categoryId || 'other',
+    name: categoryId ? (categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace(/_/g, ' ')) : 'Other',
+    icon: type === 'income' ? '💰' : '📦',
+    color: distinctColor
+  };
+}
 
 export const GOAL_ICONS = [
   { id: 'emergency', icon: '🛡️', label: 'Emergency Fund' },
@@ -130,19 +235,49 @@ export function setLocal(key, value) {
   }
 }
 
+export const DEFAULT_USER_ID = 'ft_default_user';
+
+export function getActiveUserId() {
+  const current = getCurrentUser();
+  return current?.id || DEFAULT_USER_ID;
+}
+
+export function getUserStorageKey(baseKey, userId) {
+  const uid = userId || getActiveUserId();
+  if (uid === DEFAULT_USER_ID) {
+    return baseKey;
+  }
+  return `${baseKey}_${uid}`;
+}
+
 // Transactions API
-export function getTransactions() {
-  const txs = getLocal(STORAGE_KEYS.TRANSACTIONS, null);
+export function getTransactions(userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, uid);
+  const txs = getLocal(key, null);
+
+  // If this is the DEFAULT_USER (demo mode), seed demo transactions if null
+  if (uid === DEFAULT_USER_ID) {
+    if (!txs) {
+      const demo = generateDemoTransactions();
+      setLocal(key, demo);
+      return demo;
+    }
+    return txs;
+  }
+
+  // For any registered or newly created user, initial amount is 0 (empty transactions list)
   if (!txs) {
-    const demo = generateDemoTransactions();
-    setLocal(STORAGE_KEYS.TRANSACTIONS, demo);
-    return demo;
+    setLocal(key, []);
+    return [];
   }
   return txs;
 }
 
-export function saveTransaction(transaction) {
-  const list = getTransactions();
+export function saveTransaction(transaction, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, uid);
+  const list = getTransactions(uid);
   const now = new Date().toISOString();
   let updated;
 
@@ -160,24 +295,37 @@ export function saveTransaction(transaction) {
     updated = [newTx, ...list];
   }
 
-  setLocal(STORAGE_KEYS.TRANSACTIONS, updated);
+  setLocal(key, updated);
   return updated;
 }
 
-export function deleteTransaction(id) {
-  const list = getTransactions();
+export function deleteTransaction(id, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, uid);
+  const list = getTransactions(uid);
   const updated = list.filter(item => item.id !== id);
-  setLocal(STORAGE_KEYS.TRANSACTIONS, updated);
+  setLocal(key, updated);
   return updated;
 }
 
 // Financial Goals API
-export function getGoals() {
-  const goals = getLocal(STORAGE_KEYS.GOALS, null);
-  if (!goals) {
-    const demo = generateDemoGoals();
-    setLocal(STORAGE_KEYS.GOALS, demo);
-    return demo;
+export function getGoals(userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
+  const goals = getLocal(key, null);
+
+  if (uid === DEFAULT_USER_ID) {
+    if (!goals) {
+      const demo = generateDemoGoals();
+      setLocal(key, demo);
+      return demo;
+    }
+  } else {
+    // For any registered or newly created user, start with empty goals list (initial amount is 0)
+    if (!goals) {
+      setLocal(key, []);
+      return [];
+    }
   }
 
   // Ensure goals have initialized history arrays and seed initial balance entry if currentAmount > 0 but history is empty
@@ -207,13 +355,15 @@ export function getGoals() {
   });
 
   if (modified) {
-    setLocal(STORAGE_KEYS.GOALS, normalized);
+    setLocal(key, normalized);
   }
   return normalized;
 }
 
-export function saveGoal(goal) {
-  const list = getGoals();
+export function saveGoal(goal, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
+  const list = getGoals(uid);
   const now = new Date().toISOString();
   let updated;
 
@@ -253,19 +403,23 @@ export function saveGoal(goal) {
     updated = [newGoal, ...list];
   }
 
-  setLocal(STORAGE_KEYS.GOALS, updated);
+  setLocal(key, updated);
   return updated;
 }
 
-export function deleteGoal(id) {
-  const list = getGoals();
+export function deleteGoal(id, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
+  const list = getGoals(uid);
   const updated = list.filter(item => item.id !== id);
-  setLocal(STORAGE_KEYS.GOALS, updated);
+  setLocal(key, updated);
   return updated;
 }
 
-export function updateGoalAmount(id, deltaAmount, meta = {}) {
-  const list = getGoals();
+export function updateGoalAmount(id, deltaAmount, meta = {}, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
+  const list = getGoals(uid);
   const now = new Date().toISOString();
   let completedJustNow = false;
 
@@ -312,12 +466,14 @@ export function updateGoalAmount(id, deltaAmount, meta = {}) {
     return g;
   });
 
-  setLocal(STORAGE_KEYS.GOALS, updated);
+  setLocal(key, updated);
   return { updated, completedJustNow };
 }
 
-export function deleteGoalTransaction(goalId, transactionId) {
-  const list = getGoals();
+export function deleteGoalTransaction(goalId, transactionId, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
+  const list = getGoals(uid);
   const now = new Date().toISOString();
   let targetGoal = null;
 
@@ -346,7 +502,7 @@ export function deleteGoalTransaction(goalId, transactionId) {
     return g;
   });
 
-  setLocal(STORAGE_KEYS.GOALS, updated);
+  setLocal(key, updated);
   return { updated, goal: targetGoal };
 }
 
@@ -750,6 +906,12 @@ export function importDataFromJSON(jsonText) {
 }
 
 export function resetAllData() {
+  const current = getCurrentUser();
+  if (current?.id && current.id !== DEFAULT_USER_ID) {
+    localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, current.id));
+    localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.GOALS, current.id));
+    localStorage.removeItem(getUserStorageKey(STORAGE_KEYS.TODOS, current.id));
+  }
   localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
   localStorage.removeItem(STORAGE_KEYS.GOALS);
   localStorage.removeItem(STORAGE_KEYS.SETTINGS);
@@ -825,6 +987,10 @@ export function loginUser({ identifier, password, rememberMe = true }) {
 
     const updatedUsers = [...users, found];
     setLocal(STORAGE_KEYS.USERS, updatedUsers);
+    // Explicitly initialize clean 0 data for auto-created new user
+    setLocal(getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, found.id), []);
+    setLocal(getUserStorageKey(STORAGE_KEYS.GOALS, found.id), []);
+    setLocal(getUserStorageKey(STORAGE_KEYS.TODOS, found.id), []);
   }
 
   setCurrentUser(found);
@@ -857,6 +1023,10 @@ export function registerUser({ name, username, email }) {
 
   const updatedUsers = [...users, newUser];
   setLocal(STORAGE_KEYS.USERS, updatedUsers);
+  // Ensure new user starts with 0 initial amount and empty transactions & goals
+  setLocal(getUserStorageKey(STORAGE_KEYS.TRANSACTIONS, newUser.id), []);
+  setLocal(getUserStorageKey(STORAGE_KEYS.GOALS, newUser.id), []);
+  setLocal(getUserStorageKey(STORAGE_KEYS.TODOS, newUser.id), []);
   setCurrentUser(newUser);
   return newUser;
 }
@@ -876,17 +1046,28 @@ export const DEFAULT_DAILY_TODOS = [
   { id: 'todo-6', text: 'Check recurring subscription renewals', category: 'Recurring', completed: false, due: 'Today' },
 ];
 
-export function getDailyTodos() {
-  const todos = getLocal(STORAGE_KEYS.TODOS, null);
-  if (!todos || !Array.isArray(todos) || todos.length === 0) {
-    setLocal(STORAGE_KEYS.TODOS, DEFAULT_DAILY_TODOS);
-    return DEFAULT_DAILY_TODOS;
+export function getDailyTodos(userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.TODOS, uid);
+  const todos = getLocal(key, null);
+  if (uid === DEFAULT_USER_ID) {
+    if (!todos || !Array.isArray(todos) || todos.length === 0) {
+      setLocal(key, DEFAULT_DAILY_TODOS);
+      return DEFAULT_DAILY_TODOS;
+    }
+    return todos;
+  }
+  if (!todos || !Array.isArray(todos)) {
+    setLocal(key, []);
+    return [];
   }
   return todos;
 }
 
-export function saveDailyTodos(todos) {
-  setLocal(STORAGE_KEYS.TODOS, todos);
+export function saveDailyTodos(todos, userId) {
+  const uid = userId || getActiveUserId();
+  const key = getUserStorageKey(STORAGE_KEYS.TODOS, uid);
+  setLocal(key, todos);
   return todos;
 }
 

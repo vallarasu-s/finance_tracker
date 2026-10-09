@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Bell, 
   Sparkles, 
@@ -45,6 +46,16 @@ export default function NotificationDropdown({
   onNavigateTab
 }) {
   const [filter, setFilter] = useState('all'); // 'all' | 'updates' | 'todos'
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 640);
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth <= 640);
+    }
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const dropdownRef = useRef(null);
 
   // Close on outside click
@@ -80,14 +91,17 @@ export default function NotificationDropdown({
   const unreadUpdates = appUpdates.filter(u => !u.read);
   const totalCount = unreadUpdates.length + unfinishedTodos.length;
 
-  return (
-    <div 
-      className="fogo-notification-dropdown" 
-      ref={dropdownRef}
-      role="dialog"
-      aria-label="Notifications - App Updates and Unfinished Todos"
-    >
-      {/* Header */}
+  const content = (
+    <>
+      <div className="fogo-notif-backdrop" onClick={onClose} aria-hidden="true" />
+      <div 
+        className="fogo-notification-dropdown" 
+        ref={dropdownRef}
+        role="dialog"
+        aria-label="Notifications - App Updates and Unfinished Todos"
+      >
+        <div className="notif-mobile-handle" aria-hidden="true" />
+        {/* Header */}
       <div className="notif-header">
         <div className="notif-header-title-row">
           <div className="notif-title-group">
@@ -318,10 +332,15 @@ export default function NotificationDropdown({
             if (onNavigateTab) onNavigateTab('dashboard');
           }}
         >
-          <span>Open Financial Dashboard Todos</span>
+          <span>Open Financial Tracker Todos</span>
           <ArrowRight size={14} />
         </button>
       </div>
     </div>
+    </>
   );
+
+  return isMobile && typeof document !== 'undefined'
+    ? createPortal(content, document.body)
+    : content;
 }

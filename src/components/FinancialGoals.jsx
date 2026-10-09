@@ -90,7 +90,8 @@ export default function FinancialGoals({
           </div>
 
           <button 
-            className="btn btn-primary"
+            type="button"
+            className="btn btn-primary daily-banner-action-btn"
             onClick={() => onOpenGoalModal()}
           >
             <Plus size={18} />

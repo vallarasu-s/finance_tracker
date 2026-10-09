@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import Navbar from './components/Navbar';
@@ -46,7 +46,7 @@ import {
 import { checkBackendHealth, syncWithJavaBackend } from './services/api';
 import { triggerConfetti } from './services/confetti';
 
-import { Plus } from 'lucide-react';
+import { Plus, LayoutDashboard, CreditCard, BarChart2, Target, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function App() {
   // Navigation State - Default to 'dashboard' (FOGO Overview)
@@ -92,6 +92,255 @@ export default function App() {
     setIsHelpModalOpen(true);
   };
 
+  // Primary Tabs Navigation Order
+  const tabOrder = useMemo(() => ['dashboard', 'transactions', 'analytics', 'goals'], []);
+  const [slideDirection, setSlideDirection] = useState('forward'); // 'forward' | 'backward'
+  const tabsNavRef = useRef(null);
+  const contentAreaRef = useRef(null);
+  const isProgrammaticScroll = useRef(false);
+
+  // Switch tabs with direction awareness and subtle mobile haptic feedback
+  const handleTabSwitch = useCallback((newTabId) => {
+    if (newTabId === activeTab) return;
+    const oldIndex = tabOrder.indexOf(activeTab);
+    const newIndex = tabOrder.indexOf(newTabId);
+    if (newIndex !== -1 && oldIndex !== -1) {
+      setSlideDirection(newIndex >= oldIndex ? 'forward' : 'backward');
+    }
+    setActiveTab(newTabId);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        // ignore
+      }
+    }
+  }, [activeTab, tabOrder]);
+
+  const goToNextTab = useCallback(() => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex !== -1 && currentIndex < tabOrder.length - 1) {
+      handleTabSwitch(tabOrder[currentIndex + 1]);
+    }
+  }, [activeTab, tabOrder, handleTabSwitch]);
+
+  const goToPrevTab = useCallback(() => {
+    const currentIndex = tabOrder.indexOf(activeTab);
+    if (currentIndex > 0) {
+      handleTabSwitch(tabOrder[currentIndex - 1]);
+    }
+  }, [activeTab, tabOrder, handleTabSwitch]);
+
+  const handleTabsKeyDown = (e) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goToNextTab();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goToPrevTab();
+    }
+  };
+
+  // Auto-scroll active tab into view in the top tab bar whenever activeTab changes
+  useEffect(() => {
+    if (!tabsNavRef.current) return;
+    const activeBtn = tabsNavRef.current.querySelector(`.fogo-main-nav-tab-btn[data-tab-id="${activeTab}"]`);
+    if (activeBtn) {
+      isProgrammaticScroll.current = true;
+      activeBtn.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+      const timer = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab]);
+
+  // When user manually scrolls/drags the tabs nav bar horizontally on mobile, sync active tab on scroll end
+  useEffect(() => {
+    const tabsNav = tabsNavRef.current;
+    if (!tabsNav) return;
+
+    let scrollTimeout = null;
+    let isUserInteracting = false;
+
+    const onNavTouchStart = () => {
+      isUserInteracting = true;
+    };
+
+    const onNavTouchEnd = () => {
+      setTimeout(() => {
+        isUserInteracting = false;
+      }, 350);
+    };
+
+    const onNavScroll = () => {
+      if (isProgrammaticScroll.current || !isUserInteracting) return;
+
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        if (!tabsNav || isProgrammaticScroll.current) return;
+
+        const navRect = tabsNav.getBoundingClientRect();
+        const navCenter = navRect.left + navRect.width / 2;
+
+        const buttons = Array.from(tabsNav.querySelectorAll('.fogo-main-nav-tab-btn'));
+        let closestTabId = null;
+        let minDistance = Infinity;
+
+        buttons.forEach((btn) => {
+          const btnRect = btn.getBoundingClientRect();
+          const btnCenter = btnRect.left + btnRect.width / 2;
+          const dist = Math.abs(btnCenter - navCenter);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestTabId = btn.getAttribute('data-tab-id');
+          }
+        });
+
+        if (closestTabId && closestTabId !== activeTab) {
+          handleTabSwitch(closestTabId);
+        }
+      }, 150);
+    };
+
+    tabsNav.addEventListener('touchstart', onNavTouchStart, { passive: true });
+    tabsNav.addEventListener('touchend', onNavTouchEnd, { passive: true });
+    tabsNav.addEventListener('scroll', onNavScroll, { passive: true });
+
+    return () => {
+      clearTimeout(scrollTimeout);
+      tabsNav.removeEventListener('touchstart', onNavTouchStart);
+      tabsNav.removeEventListener('touchend', onNavTouchEnd);
+      tabsNav.removeEventListener('scroll', onNavScroll);
+    };
+  }, [activeTab, handleTabSwitch]);
+
+  // Check if target is inside an element that shouldn't trigger swipe (e.g. horizontally scrollable table)
+  const isScrollableHorizontal = useCallback((element) => {
+    let curr = element;
+    while (curr && curr !== document.body && curr !== contentAreaRef.current) {
+      if (
+        curr.classList?.contains('fogo-main-nav-tabs') ||
+        curr.classList?.contains('fogo-main-nav-tab-btn') ||
+        curr.classList?.contains('fogo-main-nav-container') ||
+        curr.classList?.contains('fogo-mobile-tab-indicator')
+      ) {
+        return false;
+      }
+      if (
+        curr.classList?.contains('modal-overlay') ||
+        curr.classList?.contains('fogo-modal') ||
+        (curr.tagName === 'INPUT' && curr.type === 'range')
+      ) {
+        return true;
+      }
+      if (curr.scrollWidth > curr.clientWidth + 20) {
+        const style = window.getComputedStyle(curr);
+        const overflowX = style.overflowX;
+        if (overflowX === 'auto' || overflowX === 'scroll') {
+          return true;
+        }
+      }
+      curr = curr.parentElement;
+    }
+    return false;
+  }, []);
+
+  // Touch Swipe Gesture State (Swipe Left -> Next Tab, Swipe Right -> Prev Tab)
+  const touchStartPos = useRef({ x: 0, y: 0, time: 0 });
+  const isHorizontalSwipe = useRef(false);
+  const isSwipeCanceled = useRef(false);
+
+  const isAnyModalOpen =
+    txModalState.isOpen ||
+    goalModalState.isOpen ||
+    depositModalState.isOpen ||
+    goalDetailModalState.isOpen ||
+    isBackupModalOpen ||
+    isHelpModalOpen ||
+    isSettingsModalOpen ||
+    isNavDrawerOpen;
+
+  const handleTouchStart = (e) => {
+    if (isAnyModalOpen || e.touches.length !== 1) {
+      isSwipeCanceled.current = true;
+      return;
+    }
+
+    const touch = e.touches[0];
+    if (touch.clientX < 15 || touch.clientX > window.innerWidth - 15) {
+      isSwipeCanceled.current = true;
+      return;
+    }
+
+    if (isScrollableHorizontal(e.target)) {
+      isSwipeCanceled.current = true;
+      return;
+    }
+
+    touchStartPos.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now()
+    };
+    isHorizontalSwipe.current = false;
+    isSwipeCanceled.current = false;
+  };
+
+  const handleTouchMove = (e) => {
+    if (isSwipeCanceled.current || e.touches.length !== 1) return;
+
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.current.x;
+    const dy = touch.clientY - touchStartPos.current.y;
+
+    if (!isHorizontalSwipe.current) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+        isSwipeCanceled.current = true;
+        return;
+      }
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        isHorizontalSwipe.current = true;
+      }
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (isSwipeCanceled.current || !isHorizontalSwipe.current || !e.changedTouches.length) {
+      isHorizontalSwipe.current = false;
+      isSwipeCanceled.current = false;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartPos.current.x;
+    const dy = touch.clientY - touchStartPos.current.y;
+    const dt = Date.now() - touchStartPos.current.time;
+
+    const isQuickSwipe = dt < 650 && Math.abs(dx) >= 40;
+    const isLongSwipe = Math.abs(dx) >= 75;
+
+    if ((isQuickSwipe || isLongSwipe) && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      if (dx < 0) {
+        goToNextTab();
+      } else {
+        goToPrevTab();
+      }
+    }
+
+    isHorizontalSwipe.current = false;
+    isSwipeCanceled.current = false;
+  };
+
+  const handleTouchCancel = () => {
+    isHorizontalSwipe.current = false;
+    isSwipeCanceled.current = false;
+  };
+
   // Toasts
   const [toasts, setToasts] = useState([]);
 
@@ -107,16 +356,18 @@ export default function App() {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Load initial local data
+  // Load initial local data scoped to current user
   const reloadData = useCallback(() => {
-    const tx = getTransactions();
-    const g = getGoals();
+    const tx = getTransactions(currentUser?.id);
+    const g = getGoals(currentUser?.id);
     const s = getSettings();
+    const t = getDailyTodos(currentUser?.id);
     setTransactions(tx);
     setGoals(g);
     setSettings(s);
+    setTodos(t);
     document.documentElement.setAttribute('data-theme', s.theme || 'dark');
-  }, []);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     reloadData();
@@ -464,6 +715,36 @@ export default function App() {
     );
   }
 
+  // Top Primary Navigation Tabs (Matches user marked area)
+  const mainNavTabs = [
+    {
+      id: 'dashboard',
+      label: 'Financial Tracker',
+      shortLabel: 'Tracker',
+      icon: <LayoutDashboard size={16} />
+    },
+    {
+      id: 'transactions',
+      label: 'Transactions Tracker',
+      shortLabel: 'Transactions',
+      icon: <CreditCard size={16} />,
+      badge: transactions.length > 0 ? transactions.length : null
+    },
+    {
+      id: 'analytics',
+      label: 'Analytics & Spending Trends',
+      shortLabel: 'Analytics',
+      icon: <BarChart2 size={16} />
+    },
+    {
+      id: 'goals',
+      label: 'Financial Goals & Services',
+      shortLabel: 'Goals',
+      icon: <Target size={16} />,
+      badge: goals.length > 0 ? goals.length : null
+    }
+  ];
+
   return (
     <div className="fogo-app-shell">
       {/* 3-Line Hamburger Navigation Drawer (Opens in Front without shifting content) */}
@@ -471,7 +752,7 @@ export default function App() {
         isOpen={isNavDrawerOpen}
         onClose={() => setIsNavDrawerOpen(false)}
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleTabSwitch}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenHelp={() => handleOpenHelp('getting-started')}
         onOpenTransactionModal={(type = 'expense') => setTxModalState({ isOpen: true, type, editing: null })}
@@ -485,6 +766,7 @@ export default function App() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
+        transactions={transactions}
         onUpdateSettings={handleUpdateSettings}
         isOnline={isOnline}
         syncStatus={syncStatus}
@@ -509,7 +791,6 @@ export default function App() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           settings={settings}
-          onUpdateCurrency={handleUpdateCurrency}
           todos={todos}
           appUpdates={appUpdates}
           onToggleTodo={handleToggleTodo}
@@ -517,58 +798,157 @@ export default function App() {
           onMarkAllUpdatesRead={handleMarkAllUpdatesRead}
           onDeleteUpdate={handleDeleteUpdate}
           onClearAllUpdates={handleClearAllUpdates}
-          onNavigateTab={setActiveTab}
+          onNavigateTab={handleTabSwitch}
           onToggleTheme={handleToggleTheme}
         />
 
-        {/* Dynamic Tab Panels */}
-        <main className="fogo-content-area">
-          {activeTab === 'dashboard' && (
-            <Dashboard
-              transactions={transactions}
-              goals={goals}
-              settings={settings}
-              onNavigateTab={setActiveTab}
-              onOpenTransactionModal={(type = 'expense') => setTxModalState({ isOpen: true, type, editing: null })}
-              onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
-              currentUser={currentUser}
-              todos={todos}
-              onToggleTodo={handleToggleTodo}
-              onAddTodo={handleAddTodo}
-              onDeleteTodo={handleDeleteTodo}
-              onResetTodos={handleResetTodos}
-              onOpenHelp={(tab) => handleOpenHelp(tab || 'revenue-chart')}
-            />
-          )}
+        {/* Dynamic Tab Panels with Touch Swipe Support */}
+        <main
+          ref={contentAreaRef}
+          className="fogo-content-area"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
+          {/* Primary Top Navigation Tabs Container (User Marked Header Bar) */}
+          <div className="fogo-main-nav-container">
+            <button
+              type="button"
+              className="fogo-nav-arrow-btn prev"
+              onClick={goToPrevTab}
+              disabled={tabOrder.indexOf(activeTab) <= 0}
+              aria-label="Previous tab"
+              title="Previous tab"
+            >
+              <ChevronLeft size={16} />
+            </button>
 
-          {activeTab === 'transactions' && (
-            <DailyTransactions
-              transactions={transactions}
-              settings={settings}
-              onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
-              onDeleteTransaction={handleDeleteTransaction}
-              onDuplicateTransaction={handleDuplicateTransaction}
-            />
-          )}
+            <nav
+              ref={tabsNavRef}
+              className="fogo-main-nav-tabs"
+              aria-label="Primary Workspace Navigation"
+              role="tablist"
+              onKeyDown={handleTabsKeyDown}
+            >
+              {mainNavTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  data-tab-id={tab.id}
+                  type="button"
+                  className={`fogo-main-nav-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => handleTabSwitch(tab.id)}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`panel-${tab.id}`}
+                  id={`tab-${tab.id}`}
+                  title={`Switch to ${tab.label}`}
+                >
+                  <span className="main-nav-tab-icon">{tab.icon}</span>
+                  <span className="main-nav-tab-label main-nav-tab-label-full">{tab.label}</span>
+                  <span className="main-nav-tab-label-short">{tab.shortLabel || tab.label}</span>
+                  {tab.badge !== null && tab.badge !== undefined && (
+                    <span className={`main-nav-tab-badge ${activeTab === tab.id ? 'active' : ''}`}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
 
-          {activeTab === 'goals' && (
-            <FinancialGoals
-              goals={goals}
-              settings={settings}
-              onOpenGoalDetail={(goal) => setGoalDetailModalState({ isOpen: true, goal })}
-              onOpenGoalModal={(goal = null) => setGoalModalState({ isOpen: true, editing: goal })}
-              onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
-              onDeleteGoal={handleDeleteGoal}
-            />
-          )}
+            <button
+              type="button"
+              className="fogo-nav-arrow-btn next"
+              onClick={goToNextTab}
+              disabled={tabOrder.indexOf(activeTab) >= tabOrder.length - 1}
+              aria-label="Next tab"
+              title="Next tab"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
 
-          {activeTab === 'analytics' && (
-            <Analytics
-              transactions={transactions}
-              goals={goals}
-              settings={settings}
-            />
-          )}
+          {/* Mobile Swipe Pagination Indicator */}
+          <div className="fogo-mobile-tab-indicator" aria-hidden="true">
+            <div className="fogo-mobile-tab-dots">
+              {mainNavTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`fogo-mobile-tab-dot ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => handleTabSwitch(tab.id)}
+                  aria-label={`Go to ${tab.label}`}
+                >
+                  <span className="fogo-mobile-tab-dot-pill" />
+                </button>
+              ))}
+            </div>
+            <span className="fogo-mobile-swipe-text">
+              ‹ Swipe to change view ›
+            </span>
+          </div>
+
+          {/* Tab Content Panel with Directional Slide Transition */}
+          <div
+            key={activeTab}
+            className={`fogo-tab-panel slide-${slideDirection}`}
+            role="tabpanel"
+            id={`panel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+          >
+            {activeTab === 'dashboard' && (
+              <Dashboard
+                transactions={transactions}
+                goals={goals}
+                settings={settings}
+                onNavigateTab={handleTabSwitch}
+                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
+                onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
+                currentUser={currentUser}
+                todos={todos}
+                onToggleTodo={handleToggleTodo}
+                onAddTodo={handleAddTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onResetTodos={handleResetTodos}
+                onOpenHelp={(tab) => handleOpenHelp(tab || 'revenue-chart')}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDuplicateTransaction={handleDuplicateTransaction}
+              />
+            )}
+
+            {activeTab === 'transactions' && (
+              <DailyTransactions
+                transactions={transactions}
+                settings={settings}
+                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDuplicateTransaction={handleDuplicateTransaction}
+              />
+            )}
+
+            {activeTab === 'analytics' && (
+              <Analytics
+                transactions={transactions}
+                goals={goals}
+                settings={settings}
+                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDuplicateTransaction={handleDuplicateTransaction}
+                onNavigateTab={handleTabSwitch}
+              />
+            )}
+
+            {activeTab === 'goals' && (
+              <FinancialGoals
+                goals={goals}
+                settings={settings}
+                onOpenGoalDetail={(goal) => setGoalDetailModalState({ isOpen: true, goal })}
+                onOpenGoalModal={(goal = null) => setGoalModalState({ isOpen: true, editing: goal })}
+                onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
+                onDeleteGoal={handleDeleteGoal}
+              />
+            )}
+          </div>
         </main>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   Sun, 
@@ -12,15 +12,22 @@ import {
   Coins, 
   Palette, 
   ShieldAlert, 
-  Check,
-  Sparkles
+  Check, 
+  Sparkles,
+  Search,
+  Globe,
+  Calculator
 } from 'lucide-react';
 import { CURRENCIES } from '../services/storage';
+import CurrencyCalculator from './CurrencyCalculator';
+
+const POPULAR_CURRENCIES = ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'CAD', 'AUD', 'AED', 'SAR', 'SGD'];
 
 export default function SettingsModal({
   isOpen,
   onClose,
   settings,
+  transactions = [],
   onUpdateSettings,
   isOnline,
   syncStatus,
@@ -30,6 +37,19 @@ export default function SettingsModal({
   onLogout,
   onResetData,
 }) {
+  const [currencySearchQuery, setCurrencySearchQuery] = useState('');
+
+  // Balance calculations for currency converter
+  const totalIncomeAll = useMemo(() => 
+    (transactions || []).filter(t => t.type === 'income').reduce((s, t) => s + (Number(t.amount) || 0), 0)
+  , [transactions]);
+
+  const totalExpenseAll = useMemo(() => 
+    (transactions || []).filter(t => t.type === 'expense').reduce((s, t) => s + (Number(t.amount) || 0), 0)
+  , [transactions]);
+
+  const currentBalance = totalIncomeAll - totalExpenseAll;
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -42,6 +62,20 @@ export default function SettingsModal({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const activeCurrencyCode = settings?.currency || 'USD';
+  const activeCurrency = CURRENCIES.find(c => c.code === activeCurrencyCode) || CURRENCIES[0];
+
+  const filteredCurrencies = CURRENCIES.filter(c => {
+    if (!currencySearchQuery.trim()) return true;
+    const q = currencySearchQuery.toLowerCase();
+    return (
+      c.country.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q) ||
+      c.symbol.toLowerCase().includes(q)
+    );
+  });
 
   const toggleTheme = (themeName) => {
     onUpdateSettings({ theme: themeName });
@@ -159,33 +193,146 @@ export default function SettingsModal({
             </div>
           </div>
 
-          {/* Section 3: Currency Selector */}
+          {/* Section 3: Country Currency & Regional Settings */}
           <div className="settings-section">
             <div className="settings-section-header">
               <Coins size={18} className="settings-section-icon" />
-              <span className="settings-section-title">Currency & Regional</span>
+              <div className="settings-section-title-wrap">
+                <span className="settings-section-title">Country & Currency</span>
+                <span className="settings-section-badge">{CURRENCIES.length} Available</span>
+              </div>
             </div>
 
-            <div className="settings-currency-wrapper">
-              <label htmlFor="settings-currency-select" className="settings-label">
-                Display Currency
-              </label>
-              <select
-                id="settings-currency-select"
-                className="form-select settings-currency-select"
-                value={settings.currency}
-                onChange={(e) => handleCurrencyChange(e.target.value)}
-              >
-                {CURRENCIES.map(c => (
-                  <option key={c.code} value={c.code}>
-                    {c.flag} {c.country} — {c.name} ({c.symbol})
-                  </option>
-                ))}
-              </select>
+            <div className="settings-currency-container">
+              {/* Active Selected Currency Showcase Card */}
+              <div className="settings-active-currency-showcase">
+                <div className="active-currency-main">
+                  <span className="active-currency-flag-large">{activeCurrency.flag}</span>
+                  <div className="active-currency-details">
+                    <div className="active-currency-title-row">
+                      <span className="active-currency-country-name">{activeCurrency.country}</span>
+                      <span className="active-currency-pill-badge">Active</span>
+                    </div>
+                    <span className="active-currency-subtext">
+                      {activeCurrency.name} • <span className="active-code-mono">{activeCurrency.code}</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="active-currency-symbol-display">
+                  <span className="active-symbol-char">{activeCurrency.symbol}</span>
+                </div>
+              </div>
+
+              {/* Popular Currencies Quick Bar */}
+              <div className="settings-popular-row">
+                <span className="settings-popular-label">Popular:</span>
+                <div className="settings-popular-chips">
+                  {POPULAR_CURRENCIES.map(code => {
+                    const curr = CURRENCIES.find(c => c.code === code);
+                    if (!curr) return null;
+                    const isSelected = curr.code === activeCurrencyCode;
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        className={`settings-chip-btn ${isSelected ? 'active' : ''}`}
+                        onClick={() => handleCurrencyChange(curr.code)}
+                        title={`${curr.country} - ${curr.name} (${curr.symbol})`}
+                      >
+                        <span className="chip-flag">{curr.flag}</span>
+                        <span className="chip-code">{curr.code}</span>
+                        <span className="chip-sym">({curr.symbol})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Search Filter Box */}
+              <div className="settings-currency-search-box">
+                <Search size={15} className="settings-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search country, currency, or code (e.g. India, USD, ₹)..."
+                  value={currencySearchQuery}
+                  onChange={(e) => setCurrencySearchQuery(e.target.value)}
+                  className="settings-currency-input"
+                />
+                {currencySearchQuery && (
+                  <button
+                    type="button"
+                    className="settings-search-clear-btn"
+                    onClick={() => setCurrencySearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Scrollable Currency Selection Grid / List */}
+              <div className="settings-currency-grid-scroll">
+                {filteredCurrencies.length === 0 ? (
+                  <div className="settings-currency-no-results">
+                    <p>No country or currency found matching "{currencySearchQuery}"</p>
+                    <button
+                      type="button"
+                      className="settings-clear-filter-btn"
+                      onClick={() => setCurrencySearchQuery('')}
+                    >
+                      Show all currencies
+                    </button>
+                  </div>
+                ) : (
+                  filteredCurrencies.map(c => {
+                    const isSelected = c.code === activeCurrencyCode;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        className={`settings-currency-card-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleCurrencyChange(c.code)}
+                      >
+                        <span className="currency-card-flag">{c.flag}</span>
+                        <div className="currency-card-meta">
+                          <span className="currency-card-country">{c.country}</span>
+                          <span className="currency-card-name">{c.name}</span>
+                        </div>
+                        <div className="currency-card-tag">
+                          <span className="currency-card-code">{c.code}</span>
+                          <span className="currency-card-symbol">{c.symbol}</span>
+                        </div>
+                        {isSelected && (
+                          <div className="currency-card-check">
+                            <Check size={13} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Section 4: Java Backend Sync */}
+          {/* Section 4: Currency Calculator & Converter */}
+          <div className="settings-section settings-currency-calc-section">
+            <div className="settings-section-header">
+              <Calculator size={18} className="settings-section-icon" />
+              <span className="settings-section-title">Currency Calculator & Converter</span>
+            </div>
+            
+            <div className="settings-currency-calc-wrapper">
+              <CurrencyCalculator 
+                settings={settings}
+                currentBalance={currentBalance}
+                displayCash={currentBalance}
+                displayRevenue={totalIncomeAll}
+              />
+            </div>
+          </div>
+
+          {/* Section 5: Java Backend Sync */}
           <div className="settings-section">
             <div className="settings-section-header">
               <RefreshCw size={18} className="settings-section-icon" />
@@ -228,7 +375,7 @@ export default function SettingsModal({
             </div>
           </div>
 
-          {/* Section 5: Data Management & Backups */}
+          {/* Section 6: Data Management & Backups */}
           <div className="settings-section">
             <div className="settings-section-header">
               <Database size={18} className="settings-section-icon" />

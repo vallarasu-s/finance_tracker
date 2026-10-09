@@ -131,7 +131,7 @@ export default function Sidebar({
                 onClick={() => handleSelectTab('transactions')}
               >
                 <CreditCard size={18} className="sidebar-item-icon" />
-                <span className="sidebar-item-label">Daily Tracker</span>
+                <span className="sidebar-item-label">Transactions Tracker</span>
                 <ChevronDown size={14} className="sidebar-item-chevron" />
               </button>
 

@@ -47,8 +47,8 @@ export default function NavDrawer({
     },
     {
       id: 'transactions',
-      label: 'Daily Tracker',
-      desc: 'Daily inflow, outflow & expenses',
+      label: 'Transactions Tracker',
+      desc: 'Inflow, outflow & expenses',
       icon: <Calendar size={22} />,
       badge: transactionCount > 0 ? `${transactionCount}` : null,
       accentColor: 'var(--color-income)'
@@ -94,7 +94,7 @@ export default function NavDrawer({
             </div>
             <div className="nav-drawer-brand-text">
               <span className="nav-drawer-title">Finance Manager</span>
-              <span className="nav-drawer-tagline">Financial Dashboard</span>
+              <span className="nav-drawer-tagline">Financial Tracker</span>
             </div>
           </div>
 
