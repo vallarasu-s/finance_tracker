@@ -17,9 +17,11 @@ import {
   PiggyBank,
   Sparkles,
   Receipt,
-  FileText
+  FileText,
+  ChevronLeft
 } from 'lucide-react';
 import { formatCurrency, formatTime12Hour, exportGoalHistoryAsCSV } from '../services/storage';
+import { pushModalNavigation, popModalNavigation } from '../services/navigation';
 
 export default function GoalDetailModal({
   isOpen,
@@ -114,6 +116,15 @@ export default function GoalDetailModal({
     const d = new Date();
     setFormTime(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
     setIsActionFormOpen(true);
+    pushModalNavigation('goal_action_form', () => {
+      setIsActionFormOpen(false);
+      setFormAmount('');
+      setFormNote('');
+    });
+  };
+
+  const handleCloseActionForm = () => {
+    popModalNavigation('goal_action_form');
   };
 
   const handleApplyInlineAction = (e) => {
@@ -132,9 +143,7 @@ export default function GoalDetailModal({
       actionType,
     });
 
-    setIsActionFormOpen(false);
-    setFormAmount('');
-    setFormNote('');
+    handleCloseActionForm();
   };
 
   const handleQuickAddPreset = (val) => {
@@ -195,6 +204,28 @@ export default function GoalDetailModal({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon-only goal-detail-header-back-btn"
+              onClick={onClose}
+              title="Go back to Goals (or press browser Back / Esc)"
+              aria-label="Go back to Goals"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-subtle)',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
             <div 
               style={{ 
                 width: '46px', 
@@ -263,14 +294,12 @@ export default function GoalDetailModal({
             </button>
             <button
               type="button"
-              className="btn btn-ghost btn-icon-only"
+              className="btn btn-ghost btn-icon-only goal-detail-delete-btn"
               style={{ color: 'var(--color-expense)' }}
               title="Delete Goal"
+              aria-label="Delete Goal"
               onClick={() => {
-                if (window.confirm(`Are you sure you want to delete the goal "${goal.title}"? All savings history for this goal will be removed.`)) {
-                  onClose();
-                  onDeleteGoal(goal.id);
-                }
+                onDeleteGoal(goal);
               }}
             >
               <Trash2 size={16} />
@@ -483,7 +512,7 @@ export default function GoalDetailModal({
                   type="button"
                   className="btn btn-ghost btn-icon-only"
                   style={{ width: '28px', height: '28px', padding: 0 }}
-                  onClick={() => setIsActionFormOpen(false)}
+                  onClick={handleCloseActionForm}
                 >
                   <X size={15} />
                 </button>
@@ -556,7 +585,7 @@ export default function GoalDetailModal({
                   <input
                     type="date"
                     required
-                    className="form-input"
+                    className="form-input goal-date-input"
                     value={formDate}
                     onChange={(e) => setFormDate(e.target.value)}
                   />

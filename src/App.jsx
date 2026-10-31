@@ -16,6 +16,7 @@ import NavDrawer from './components/NavDrawer';
 import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import GoalDetailModal from './components/GoalDetailModal';
+import ConfirmModal from './components/ConfirmModal';
 
 import { 
   getTransactions, 
@@ -45,18 +46,44 @@ import {
 
 import { checkBackendHealth, syncWithJavaBackend } from './services/api';
 import { triggerConfetti } from './services/confetti';
+import { 
+  initNavigation, 
+  pushTabNavigation, 
+  pushModalNavigation, 
+  popModalNavigation 
+} from './services/navigation';
 
 import { Plus, LayoutDashboard, CreditCard, BarChart2, Target, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function App() {
   // Navigation State - Default to 'dashboard' (FOGO Overview)
   const [activeTab, setActiveTab] = useState('dashboard');
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // User Auth State
   const [currentUser, setCurrentUser] = useState(getCurrentUser());
+
+  // Toasts (declared early so they are accessible by navigation and login handlers)
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3500);
+  }, []);
+
+  const dismissToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   const handleLogin = (user) => {
     setCurrentUser(user);
@@ -87,10 +114,127 @@ export default function App() {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [helpInitialTab, setHelpInitialTab] = useState('getting-started');
 
-  const handleOpenHelp = (tab = 'getting-started') => {
+  // Modal Navigation Handlers (Hooked into native browser & mobile back history)
+  const openTxModal = useCallback((type = 'expense', editing = null) => {
+    setTxModalState({ isOpen: true, type, editing });
+    pushModalNavigation('transaction_modal', () => {
+      setTxModalState({ isOpen: false, type: 'expense', editing: null });
+    });
+  }, []);
+
+  const closeTxModal = useCallback(() => {
+    setTxModalState({ isOpen: false, type: 'expense', editing: null });
+    popModalNavigation('transaction_modal');
+  }, []);
+
+  const openGoalModal = useCallback((editing = null) => {
+    setGoalModalState({ isOpen: true, editing });
+    pushModalNavigation('goal_modal', () => {
+      setGoalModalState({ isOpen: false, editing: null });
+    });
+  }, []);
+
+  const closeGoalModal = useCallback(() => {
+    setGoalModalState({ isOpen: false, editing: null });
+    popModalNavigation('goal_modal');
+  }, []);
+
+  const openDepositModal = useCallback((goal) => {
+    setDepositModalState({ isOpen: true, goal });
+    pushModalNavigation('deposit_modal', () => {
+      setDepositModalState({ isOpen: false, goal: null });
+    });
+  }, []);
+
+  const closeDepositModal = useCallback(() => {
+    setDepositModalState({ isOpen: false, goal: null });
+    popModalNavigation('deposit_modal');
+  }, []);
+
+  const openGoalDetailModal = useCallback((goal) => {
+    setGoalDetailModalState({ isOpen: true, goal });
+    pushModalNavigation('goal_detail_modal', () => {
+      setGoalDetailModalState({ isOpen: false, goal: null });
+    });
+  }, []);
+
+  const closeGoalDetailModal = useCallback(() => {
+    setGoalDetailModalState({ isOpen: false, goal: null });
+    popModalNavigation('goal_detail_modal');
+  }, []);
+
+  const openBackupModal = useCallback(() => {
+    setIsBackupModalOpen(true);
+    pushModalNavigation('backup_modal', () => {
+      setIsBackupModalOpen(false);
+    });
+  }, []);
+
+  const closeBackupModal = useCallback(() => {
+    setIsBackupModalOpen(false);
+    popModalNavigation('backup_modal');
+  }, []);
+
+  const openHelpModal = useCallback((tab = 'getting-started') => {
     setHelpInitialTab(tab);
     setIsHelpModalOpen(true);
-  };
+    pushModalNavigation('help_modal', () => {
+      setIsHelpModalOpen(false);
+    });
+  }, []);
+
+  const closeHelpModal = useCallback(() => {
+    setIsHelpModalOpen(false);
+    popModalNavigation('help_modal');
+  }, []);
+
+  // Custom Confirmation Modal state for smooth, unblocked deletions
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    variant: 'danger',
+    onConfirm: null,
+  });
+
+  const closeConfirmModal = useCallback(() => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    popModalNavigation('confirm_modal');
+  }, []);
+
+  const openSettingsModal = useCallback(() => {
+    setIsSettingsModalOpen(true);
+    pushModalNavigation('settings_modal', () => {
+      setIsSettingsModalOpen(false);
+    });
+  }, []);
+
+  const closeSettingsModal = useCallback(() => {
+    setIsSettingsModalOpen(false);
+    popModalNavigation('settings_modal');
+  }, []);
+
+  const openNavDrawer = useCallback(() => {
+    setIsNavDrawerOpen(true);
+    pushModalNavigation('nav_drawer', () => {
+      setIsNavDrawerOpen(false);
+    });
+  }, []);
+
+  const closeNavDrawer = useCallback(() => {
+    setIsNavDrawerOpen(false);
+    popModalNavigation('nav_drawer');
+  }, []);
+
+  const toggleNavDrawer = useCallback(() => {
+    if (isNavDrawerOpen) {
+      closeNavDrawer();
+    } else {
+      openNavDrawer();
+    }
+  }, [isNavDrawerOpen, closeNavDrawer, openNavDrawer]);
 
   // Primary Tabs Navigation Order
   const tabOrder = useMemo(() => ['dashboard', 'transactions', 'analytics', 'goals'], []);
@@ -99,13 +243,16 @@ export default function App() {
   const contentAreaRef = useRef(null);
   const isProgrammaticScroll = useRef(false);
 
-  // Switch tabs with direction awareness and subtle mobile haptic feedback
-  const handleTabSwitch = useCallback((newTabId) => {
+  // Switch tabs with direction awareness, history registration, and subtle mobile haptic feedback
+  const handleTabSwitch = useCallback((newTabId, isFromHistory = false) => {
     if (newTabId === activeTab) return;
     const oldIndex = tabOrder.indexOf(activeTab);
     const newIndex = tabOrder.indexOf(newTabId);
     if (newIndex !== -1 && oldIndex !== -1) {
       setSlideDirection(newIndex >= oldIndex ? 'forward' : 'backward');
+    }
+    if (!isFromHistory) {
+      pushTabNavigation(newTabId, activeTab);
     }
     setActiveTab(newTabId);
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -116,6 +263,18 @@ export default function App() {
       }
     }
   }, [activeTab, tabOrder]);
+
+  // Initialize navigation & back-history manager on mount
+  useEffect(() => {
+    initNavigation({
+      onTabChange: (newTabId, direction) => {
+        setSlideDirection(direction || 'backward');
+        setActiveTab(newTabId);
+      },
+      showToast,
+      getActiveTab: () => activeTabRef.current
+    });
+  }, [showToast]);
 
   const goToNextTab = useCallback(() => {
     const currentIndex = tabOrder.indexOf(activeTab);
@@ -341,21 +500,6 @@ export default function App() {
     isSwipeCanceled.current = false;
   };
 
-  // Toasts
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = useCallback((message, type = 'info') => {
-    const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3500);
-  }, []);
-
-  const dismissToast = (id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
-
   // Load initial local data scoped to current user
   const reloadData = useCallback(() => {
     const tx = getTransactions(currentUser?.id);
@@ -440,7 +584,7 @@ export default function App() {
   const handleSaveTransaction = (transactionData) => {
     const updated = saveTransaction(transactionData);
     setTransactions(updated);
-    setTxModalState({ isOpen: false, type: 'expense', editing: null });
+    closeTxModal();
     showToast(
       transactionData.id ? 'Transaction updated.' : `${transactionData.type === 'income' ? 'Income' : 'Expense'} recorded!`,
       'success'
@@ -479,7 +623,7 @@ export default function App() {
   const handleSaveGoal = (goalData) => {
     const updated = saveGoal(goalData);
     setGoals(updated);
-    setGoalModalState({ isOpen: false, editing: null });
+    closeGoalModal();
     showToast(goalData.id ? 'Goal updated.' : 'New financial goal set!', 'success');
 
     if (goalData.currentAmount >= goalData.targetAmount) {
@@ -491,24 +635,41 @@ export default function App() {
     }
   };
 
-  const handleDeleteGoal = (id) => {
-    if (window.confirm('Delete this financial goal?')) {
-      const updated = deleteGoal(id);
-      setGoals(updated);
-      if (goalDetailModalState.goal?.id === id) {
-        setGoalDetailModalState({ isOpen: false, goal: null });
+  const handleDeleteGoal = useCallback((goalOrId) => {
+    const goalId = typeof goalOrId === 'object' && goalOrId !== null ? goalOrId.id : goalOrId;
+    const targetGoal = goals.find(g => String(g.id) === String(goalId)) || (typeof goalOrId === 'object' ? goalOrId : null);
+    const goalTitle = targetGoal?.title ? `"${targetGoal.title}"` : 'this financial goal';
+
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Financial Goal',
+      message: `Are you sure you want to delete ${goalTitle}? All savings history and transaction logs for this goal will be permanently removed.`,
+      confirmText: 'Delete Goal',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => {
+        const updated = deleteGoal(goalId, currentUser?.id);
+        setGoals(updated);
+        if (goalDetailModalState.goal && String(goalDetailModalState.goal.id) === String(goalId)) {
+          closeGoalDetailModal();
+        }
+        showToast('Goal deleted successfully.', 'info');
+        if (isOnline) {
+          syncWithJavaBackend({ transactions: getTransactions(), goals: updated });
+        }
+        closeConfirmModal();
       }
-      showToast('Goal deleted.', 'info');
-      if (isOnline) {
-        syncWithJavaBackend({ transactions: getTransactions(), goals: updated });
-      }
-    }
-  };
+    });
+
+    pushModalNavigation('confirm_modal', () => {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    });
+  }, [goals, currentUser, goalDetailModalState, closeGoalDetailModal, closeConfirmModal, isOnline, showToast]);
 
   const handleApplyDeposit = (goalId, deltaAmount, meta = {}) => {
     const { updated, completedJustNow } = updateGoalAmount(goalId, deltaAmount, meta);
     setGoals(updated);
-    setDepositModalState({ isOpen: false, goal: null });
+    closeDepositModal();
 
     const updatedGoal = updated.find(g => g.id === goalId);
     if (updatedGoal) {
@@ -681,25 +842,26 @@ export default function App() {
 
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
-        setTxModalState({ isOpen: true, type: 'expense', editing: null });
+        openTxModal('expense', null);
       } else if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
-        setGoalModalState({ isOpen: true, editing: null });
+        openGoalModal(null);
       } else if (e.key === '?' || e.key === 'h' || e.key === 'H') {
         e.preventDefault();
         handleOpenHelp('getting-started');
       } else if (e.key === 'Escape') {
-        setTxModalState({ isOpen: false, type: 'expense', editing: null });
-        setGoalModalState({ isOpen: false, editing: null });
-        setDepositModalState({ isOpen: false, goal: null });
-        setIsBackupModalOpen(false);
-        setIsHelpModalOpen(false);
+        closeTxModal();
+        closeGoalModal();
+        closeDepositModal();
+        closeBackupModal();
+        closeHelpModal();
+        closeConfirmModal();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [openTxModal, openGoalModal, closeTxModal, closeGoalModal, closeDepositModal, closeBackupModal, closeHelpModal, closeConfirmModal]);
 
   // If user is not logged in, show the Login Form
   if (!currentUser) {
@@ -750,12 +912,12 @@ export default function App() {
       {/* 3-Line Hamburger Navigation Drawer (Opens in Front without shifting content) */}
       <Sidebar
         isOpen={isNavDrawerOpen}
-        onClose={() => setIsNavDrawerOpen(false)}
+        onClose={closeNavDrawer}
         activeTab={activeTab}
         onSelectTab={handleTabSwitch}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-        onOpenHelp={() => handleOpenHelp('getting-started')}
-        onOpenTransactionModal={(type = 'expense') => setTxModalState({ isOpen: true, type, editing: null })}
+        onOpenSettings={openSettingsModal}
+        onOpenHelp={() => openHelpModal('getting-started')}
+        onOpenTransactionModal={(type = 'expense') => openTxModal(type, null)}
         isOnline={isOnline}
         transactionCount={transactions.length}
         goalCount={goals.length}
@@ -764,14 +926,14 @@ export default function App() {
       {/* Grouped Settings Modal (Opens in Front centered with backdrop) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
+        onClose={closeSettingsModal}
         settings={settings}
         transactions={transactions}
         onUpdateSettings={handleUpdateSettings}
         isOnline={isOnline}
         syncStatus={syncStatus}
         onTriggerSync={triggerSync}
-        onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onOpenBackupModal={openBackupModal}
         currentUser={currentUser}
         onLogout={handleLogout}
         onResetData={handleResetData}
@@ -781,11 +943,11 @@ export default function App() {
       <div className="fogo-main-wrapper">
         <TopHeader
           activeTab={activeTab}
-          onOpenNavDrawer={() => setIsNavDrawerOpen(prev => !prev)}
+          onOpenNavDrawer={toggleNavDrawer}
           isNavDrawerOpen={isNavDrawerOpen}
-          onOpenSettings={() => setIsSettingsModalOpen(true)}
-          onOpenHelp={() => handleOpenHelp('getting-started')}
-          onOpenTransactionModal={(type = 'expense') => setTxModalState({ isOpen: true, type, editing: null })}
+          onOpenSettings={openSettingsModal}
+          onOpenHelp={() => openHelpModal('getting-started')}
+          onOpenTransactionModal={(type = 'expense') => openTxModal(type, null)}
           currentUser={currentUser}
           isOnline={isOnline}
           searchQuery={searchQuery}
@@ -902,15 +1064,15 @@ export default function App() {
                 goals={goals}
                 settings={settings}
                 onNavigateTab={handleTabSwitch}
-                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
-                onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
+                onOpenTransactionModal={(type = 'expense', tx = null) => openTxModal(type, tx)}
+                onOpenDepositModal={(goal) => openDepositModal(goal)}
                 currentUser={currentUser}
                 todos={todos}
                 onToggleTodo={handleToggleTodo}
                 onAddTodo={handleAddTodo}
                 onDeleteTodo={handleDeleteTodo}
                 onResetTodos={handleResetTodos}
-                onOpenHelp={(tab) => handleOpenHelp(tab || 'revenue-chart')}
+                onOpenHelp={(tab) => openHelpModal(tab || 'revenue-chart')}
                 onDeleteTransaction={handleDeleteTransaction}
                 onDuplicateTransaction={handleDuplicateTransaction}
               />
@@ -920,7 +1082,7 @@ export default function App() {
               <DailyTransactions
                 transactions={transactions}
                 settings={settings}
-                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
+                onOpenTransactionModal={(type = 'expense', tx = null) => openTxModal(type, tx)}
                 onDeleteTransaction={handleDeleteTransaction}
                 onDuplicateTransaction={handleDuplicateTransaction}
               />
@@ -931,7 +1093,7 @@ export default function App() {
                 transactions={transactions}
                 goals={goals}
                 settings={settings}
-                onOpenTransactionModal={(type = 'expense', tx = null) => setTxModalState({ isOpen: true, type, editing: tx })}
+                onOpenTransactionModal={(type = 'expense', tx = null) => openTxModal(type, tx)}
                 onDeleteTransaction={handleDeleteTransaction}
                 onDuplicateTransaction={handleDuplicateTransaction}
                 onNavigateTab={handleTabSwitch}
@@ -942,9 +1104,9 @@ export default function App() {
               <FinancialGoals
                 goals={goals}
                 settings={settings}
-                onOpenGoalDetail={(goal) => setGoalDetailModalState({ isOpen: true, goal })}
-                onOpenGoalModal={(goal = null) => setGoalModalState({ isOpen: true, editing: goal })}
-                onOpenDepositModal={(goal) => setDepositModalState({ isOpen: true, goal })}
+                onOpenGoalDetail={(goal) => openGoalDetailModal(goal)}
+                onOpenGoalModal={(goal = null) => openGoalModal(goal)}
+                onOpenDepositModal={(goal) => openDepositModal(goal)}
                 onDeleteGoal={handleDeleteGoal}
               />
             )}
@@ -958,7 +1120,7 @@ export default function App() {
         initialType={txModalState.type}
         editingTransaction={txModalState.editing}
         settings={settings}
-        onClose={() => setTxModalState({ isOpen: false, type: 'expense', editing: null })}
+        onClose={closeTxModal}
         onSave={handleSaveTransaction}
       />
 
@@ -966,7 +1128,7 @@ export default function App() {
         isOpen={goalModalState.isOpen}
         editingGoal={goalModalState.editing}
         settings={settings}
-        onClose={() => setGoalModalState({ isOpen: false, editing: null })}
+        onClose={closeGoalModal}
         onSave={handleSaveGoal}
       />
 
@@ -974,11 +1136,11 @@ export default function App() {
         isOpen={depositModalState.isOpen}
         goal={depositModalState.goal}
         settings={settings}
-        onClose={() => setDepositModalState({ isOpen: false, goal: null })}
+        onClose={closeDepositModal}
         onApplyDeposit={handleApplyDeposit}
         onViewFullHistory={(goal) => {
-          setDepositModalState({ isOpen: false, goal: null });
-          setGoalDetailModalState({ isOpen: true, goal });
+          closeDepositModal();
+          openGoalDetailModal(goal);
         }}
       />
 
@@ -986,8 +1148,8 @@ export default function App() {
         isOpen={goalDetailModalState.isOpen}
         goal={goals.find(g => g.id === goalDetailModalState.goal?.id) || goalDetailModalState.goal}
         settings={settings}
-        onClose={() => setGoalDetailModalState({ isOpen: false, goal: null })}
-        onEditGoal={(goal) => setGoalModalState({ isOpen: true, editing: goal })}
+        onClose={closeGoalDetailModal}
+        onEditGoal={(goal) => openGoalModal(goal)}
         onDeleteGoal={handleDeleteGoal}
         onApplyDeposit={handleApplyDeposit}
         onDeleteGoalTransaction={handleDeleteGoalTransaction}
@@ -996,7 +1158,7 @@ export default function App() {
 
       <DataBackupModal
         isOpen={isBackupModalOpen}
-        onClose={() => setIsBackupModalOpen(false)}
+        onClose={closeBackupModal}
         onReloadData={reloadData}
         onShowToast={showToast}
         onResetData={handleResetData}
@@ -1007,12 +1169,12 @@ export default function App() {
       <HelpModal
         isOpen={isHelpModalOpen}
         initialTab={helpInitialTab}
-        onClose={() => setIsHelpModalOpen(false)}
+        onClose={closeHelpModal}
         isOnline={isOnline}
-        onOpenTransactionModal={(type = 'expense') => setTxModalState({ isOpen: true, type, editing: null })}
-        onOpenGoalModal={(goal = null) => setGoalModalState({ isOpen: true, editing: goal })}
-        onOpenSettings={() => setIsSettingsModalOpen(true)}
-        onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onOpenTransactionModal={(type = 'expense') => openTxModal(type, null)}
+        onOpenGoalModal={(goal = null) => openGoalModal(goal)}
+        onOpenSettings={openSettingsModal}
+        onOpenBackupModal={openBackupModal}
         onShowToast={showToast}
         settings={settings}
         stats={{
@@ -1026,13 +1188,25 @@ export default function App() {
       <button 
         type="button"
         className="floating-new-entry-btn left-bottom"
-        onClick={() => setTxModalState({ isOpen: true, type: 'expense', editing: null })}
+        onClick={() => openTxModal('expense', null)}
         title="Add New Daily Transaction (Key: N)"
         aria-label="Add New Transaction"
       >
         <Plus size={20} className="floating-btn-icon" />
         <span className="floating-btn-text">New Entry</span>
       </button>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        variant={confirmModal.variant}
+        onConfirm={confirmModal.onConfirm}
+        onClose={closeConfirmModal}
+      />
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

@@ -52,7 +52,8 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   background: linear-gradient(90deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
+  background-clip: text;
+  
   -webkit-text-fill-color: transparent;
 }
 
@@ -252,6 +253,18 @@
 
 .floating-btn-text {
   letter-spacing: 0.01em;
+}
+
+/* Hide Floating New Entry button when rotated chart screen view is active on mobile */
+body.chart-rotated-fullscreen-active .floating-new-entry-btn,
+body:has(.daily-chart-rotated-fullscreen) .floating-new-entry-btn,
+.app-container:has(.daily-chart-rotated-fullscreen) .floating-new-entry-btn,
+.chart-rotated-fullscreen-active .floating-new-entry-btn {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.7) !important;
 }
 
 /* Tab Navigation */
@@ -654,16 +667,6 @@
   overflow: hidden;
 }
 
-/* Upright Full Screen (0°) */
-.daily-chart-fs-inner.rotated-0 {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: none;
-  padding: 0.85rem 1.25rem;
-}
-
 /* Rotated 90° - Spans full screen dimensions sideways like turning a phone */
 .daily-chart-fs-inner.rotated-90 {
   position: absolute;
@@ -711,8 +714,7 @@
     font-size: 0.7rem;
   }
   .daily-chart-fs-inner.rotated-90,
-  .daily-chart-fs-inner.rotated-neg-90,
-  .daily-chart-fs-inner.rotated-0 {
+  .daily-chart-fs-inner.rotated-neg-90 {
     padding: 0.6rem 0.85rem;
   }
 }

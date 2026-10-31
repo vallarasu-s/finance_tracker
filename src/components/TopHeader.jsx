@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Menu, 
   Search, 
@@ -6,9 +6,11 @@ import {
   Settings as SettingsIcon, 
   HelpCircle,
   Sun,
-  Moon
+  Moon,
+  ChevronLeft
 } from 'lucide-react';
 import NotificationDropdown from './NotificationDropdown';
+import { pushModalNavigation, popModalNavigation, goBackOneStep } from '../services/navigation';
 
 export default function TopHeader({
   activeTab,
@@ -33,6 +35,19 @@ export default function TopHeader({
   onToggleTheme
 }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+  const handleToggleNotif = () => {
+    if (isNotifOpen) {
+      popModalNavigation('notif_dropdown');
+    } else {
+      setIsNotifOpen(true);
+      pushModalNavigation('notif_dropdown', () => setIsNotifOpen(false));
+    }
+  };
+
+  const handleCloseNotif = () => {
+    popModalNavigation('notif_dropdown');
+  };
 
   // Unfinished todos & unread app updates count
   const unfinishedTodosCount = todos.filter(t => !t.completed).length;
@@ -63,7 +78,7 @@ export default function TopHeader({
 
   return (
     <header className="fogo-top-header">
-      {/* Left side: Hamburger 3-Line Menu + Page Title */}
+      {/* Left side: Hamburger 3-Line Menu + Optional Back Affordance + Page Title */}
       <div className="top-header-left">
         <button
           type="button"
@@ -75,6 +90,32 @@ export default function TopHeader({
         >
           <Menu size={22} />
         </button>
+
+        {activeTab !== 'dashboard' && (
+          <button
+            type="button"
+            className="top-header-step-back-btn"
+            onClick={goBackOneStep}
+            title="Go back one step (or press browser Back / Esc)"
+            aria-label="Go back one step"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              marginRight: '0.25rem',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
 
         <h1 className="top-header-page-title">{getPageTitle()}</h1>
       </div>
@@ -100,7 +141,7 @@ export default function TopHeader({
             className={`top-header-icon-btn ${isNotifOpen ? 'active' : ''}`}
             title={`Notifications: ${unreadUpdatesCount} app updates, ${unfinishedTodosCount} unfinished todos`}
             aria-label="Open Notifications"
-            onClick={() => setIsNotifOpen(prev => !prev)}
+            onClick={handleToggleNotif}
             aria-expanded={isNotifOpen}
           >
             <Bell size={18} />
@@ -114,7 +155,7 @@ export default function TopHeader({
           {/* Interactive Notification Dropdown */}
           <NotificationDropdown
             isOpen={isNotifOpen}
-            onClose={() => setIsNotifOpen(false)}
+            onClose={handleCloseNotif}
             appUpdates={appUpdates}
             todos={todos}
             onToggleTodo={onToggleTodo}

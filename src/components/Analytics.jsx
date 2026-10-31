@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, CATEGORIES, getCategoryInfo } from '../services/storage';
 import CategoryHistoryModal from './CategoryHistoryModal';
+import { pushModalNavigation, popModalNavigation } from '../services/navigation';
 
 /**
  * Accurately formats category expense percentages:
@@ -53,15 +54,38 @@ export default function Analytics({
 }) {
   const symbol = settings.currencySymbol || '$';
   const [timeframe, setTimeframe] = useState('7'); // '7', '14', '30', 'yearly'
+  const [breakdownType, setBreakdownType] = useState('expense'); // 'expense' | 'income'
   const [isChartFullScreen, setIsChartFullScreen] = useState(false);
-  const [rotationAngle, setRotationAngle] = useState(90); // 90° rotation fits mobile screen like turning phone
   const [hoveredBar, setHoveredBar] = useState(null);
   const [selectedCategoryHistory, setSelectedCategoryHistory] = useState(null);
 
-  // Enter Rotated View: fits mobile screen rotated 90 degrees like mobile rotate
+  const handleOpenCategoryHistory = (cat) => {
+    setSelectedCategoryHistory(cat);
+    pushModalNavigation('category_history_modal', () => setSelectedCategoryHistory(null));
+  };
+
+  const handleCloseCategoryHistory = () => {
+    popModalNavigation('category_history_modal');
+  };
+
+  // Enter Rotated View: 90 degrees landscape rotation view for mobile
   const handleEnterRotatedView = async () => {
     setIsChartFullScreen(true);
-    setRotationAngle(90);
+    pushModalNavigation('chart_fullscreen', () => {
+      setIsChartFullScreen(false);
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch {}
+      try {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        }
+      } catch {}
+    });
 
     // Request orientation lock if supported on mobile devices
     try {
@@ -82,24 +106,7 @@ export default function Analytics({
 
   // Exit Rotated View
   const handleExitRotatedView = async () => {
-    setIsChartFullScreen(false);
-
-    try {
-      if (screen.orientation && screen.orientation.unlock) {
-        screen.orientation.unlock();
-      }
-    } catch (e) {}
-
-    // Exit browser fullscreen
-    try {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen().catch(() => {});
-        }
-      }
-    } catch (err) {}
+    popModalNavigation('chart_fullscreen');
   };
 
   // Keyboard Escape listener to exit fullscreen
@@ -126,6 +133,18 @@ export default function Analytics({
     return () => {
       document.removeEventListener('fullscreenchange', handleFsChange);
       document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, [isChartFullScreen]);
+
+  // Toggle body class when chart is in rotated fullscreen mode (hides floating action button, etc.)
+  useEffect(() => {
+    if (isChartFullScreen) {
+      document.body.classList.add('chart-rotated-fullscreen-active');
+    } else {
+      document.body.classList.remove('chart-rotated-fullscreen-active');
+    }
+    return () => {
+      document.body.classList.remove('chart-rotated-fullscreen-active');
     };
   }, [isChartFullScreen]);
 
@@ -182,10 +201,10 @@ export default function Analytics({
     return max * 1.15; // 15% headroom
   }, [barChartData]);
 
-  // Compute Category Breakdown for Doughnut Chart
+  // Compute Category Breakdown for Bar & List (supports both expense & income)
   const categoryBreakdown = useMemo(() => {
     const map = {};
-    let totalExpense = 0;
+    let totalAmount = 0;
 
     let filteredTxs = transactions;
     if (timeframe === 'yearly') {
@@ -194,29 +213,32 @@ export default function Analytics({
     } else {
       const days = parseInt(timeframe, 10);
       const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
+      cutoff.setDate(cutoff.getDate() - (days - 1));
       const cutoffStr = cutoff.toISOString().split('T')[0];
       filteredTxs = transactions.filter(t => (t.date || '') >= cutoffStr);
     }
 
-    // Fallback to all transactions if filtered set has no expenses
-    if (filteredTxs.filter(t => t.type === 'expense').length === 0) {
+    // Fallback to all transactions if filtered set has no transactions of selected type
+    if (filteredTxs.filter(t => t.type === breakdownType).length === 0) {
       filteredTxs = transactions;
     }
 
     for (const t of filteredTxs) {
-      if (t.type === 'expense') {
+      if (t.type === breakdownType) {
         const amt = Number(t.amount) || 0;
-        totalExpense += amt;
-        map[t.category] = (map[t.category] || 0) + amt;
+        totalAmount += amt;
+        const catKey = t.category || (breakdownType === 'income' ? 'other_inc' : 'other_exp');
+        map[catKey] = (map[catKey] || 0) + amt;
       }
     }
 
+    const availableCats = CATEGORIES[breakdownType] || [];
+
     const items = Object.keys(map).map(catId => {
-      const catMeta = CATEGORIES.expense.find(c => c.id === catId) || getCategoryInfo(catId, 'expense');
+      const catMeta = availableCats.find(c => c.id === catId) || getCategoryInfo(catId, breakdownType);
       const amount = map[catId];
-      const rawPercent = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
-      const percentLabel = formatCategoryPercent(amount, totalExpense);
+      const rawPercent = totalAmount > 0 ? (amount / totalAmount) * 100 : 0;
+      const percentLabel = formatCategoryPercent(amount, totalAmount);
       return {
         id: catId,
         name: catMeta.name,
@@ -224,13 +246,14 @@ export default function Analytics({
         color: catMeta.color,
         amount,
         percent: rawPercent,
-        percentLabel
+        percentLabel,
+        type: breakdownType
       };
     });
 
     items.sort((a, b) => b.amount - a.amount);
-    return { items, totalExpense };
-  }, [transactions, timeframe]);
+    return { items, totalAmount };
+  }, [transactions, timeframe, breakdownType]);
 
   const totalPeriodIncome = useMemo(() => 
     barChartData.reduce((acc, d) => acc + (d.income || 0), 0)
@@ -357,7 +380,7 @@ export default function Analytics({
           } : undefined}
         >
           {isChartFullScreen ? (
-            <div className={`daily-chart-fs-inner ${rotationAngle === 90 ? 'rotated-90' : rotationAngle === -90 ? 'rotated-neg-90' : 'rotated-0'}`}>
+            <div className="daily-chart-fs-inner rotated-90">
               {/* Fullscreen Rotated Header */}
               <div style={{ 
                 display: 'flex', 
@@ -375,7 +398,7 @@ export default function Analytics({
                     {timeframe === 'yearly' ? 'Monthly Income vs. Expense (12 Months)' : 'Daily Income vs. Expense'}
                   </h3>
                   <span className="badge badge-brand" style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem' }}>
-                    {rotationAngle === 0 ? 'Fit Full Screen' : `Rotated (${rotationAngle}°)`}
+                    Rotated View (90°)
                   </span>
                 </div>
 
@@ -389,28 +412,6 @@ export default function Analytics({
                     <span style={{ width: '9px', height: '9px', borderRadius: '2px', background: 'var(--color-expense)' }} />
                     Expense
                   </span>
-
-                  {/* Orientation Switcher */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', background: 'var(--bg-elevated)', padding: '0.15rem 0.25rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                    <button
-                      type="button"
-                      className={`btn ${rotationAngle === 90 ? 'btn-primary' : 'btn-ghost'}`}
-                      onClick={() => setRotationAngle(90)}
-                      style={{ padding: '0.2rem 0.55rem', fontSize: '0.74rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                      title="Rotate 90° (Mobile Landscape View)"
-                    >
-                      <RotateCw size={12} /> 90°
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn ${rotationAngle === 0 ? 'btn-primary' : 'btn-ghost'}`}
-                      onClick={() => setRotationAngle(0)}
-                      style={{ padding: '0.2rem 0.55rem', fontSize: '0.74rem', fontWeight: 700 }}
-                      title="Fit Full Screen (0° Upright)"
-                    >
-                      0°
-                    </button>
-                  </div>
 
                   {/* Close Button */}
                   <button
@@ -805,8 +806,8 @@ export default function Analytics({
                 type="button"
                 className="chart-bottom-rotate-btn"
                 onClick={handleEnterRotatedView}
-                title="Rotate & Display Fit Screen (Mobile Rotate View)"
-                aria-label="Rotate & Display Fit Screen (Mobile Rotate View)"
+                title="Rotate Chart (Landscape View)"
+                aria-label="Rotate Chart (Landscape View)"
               >
                 <RotateCw size={13} className="rotate-icon" />
                 <span className="rotate-btn-text">Rotate</span>
@@ -815,20 +816,89 @@ export default function Analytics({
           )}
         </div>
 
-        {/* Category Spending Doughnut & Breakdown - Centered Matching Width */}
+        {/* Category Breakdown (Expenses vs Income) - Centered Matching Width */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', padding: '1.35rem 1.6rem', width: '100%', maxWidth: '820px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', margin: 0 }}>
-              <PieIcon size={18} color="var(--color-purple)" /> Expense Breakdown by Category
-            </h3>
-            <span className="badge badge-neutral" style={{ fontSize: '0.8rem', padding: '0.22rem 0.65rem' }}>
-              Total: {formatCurrency(categoryBreakdown.totalExpense, symbol)}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem', margin: 0 }}>
+                <PieIcon size={18} color={breakdownType === 'income' ? 'var(--color-income)' : 'var(--color-purple)'} />
+                {breakdownType === 'income' ? 'Income' : 'Expense'} Breakdown by Category
+              </h3>
+
+              {/* Expense vs Income Toggle Buttons */}
+              <div 
+                className="category-breakdown-type-toggle"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '0.2rem', 
+                  background: 'var(--bg-elevated)', 
+                  padding: '0.2rem 0.28rem', 
+                  borderRadius: 'var(--radius-full)', 
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)'
+                }}
+                role="group"
+                aria-label="Category Breakdown Type"
+              >
+                <button
+                  id="breakdown-toggle-expense"
+                  type="button"
+                  className={`btn ${breakdownType === 'expense' ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ 
+                    padding: '0.26rem 0.8rem', 
+                    fontSize: '0.78rem', 
+                    fontWeight: 700, 
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'all 0.2s ease',
+                    boxShadow: breakdownType === 'expense' ? '0 2px 8px var(--color-brand-glow)' : 'none'
+                  }}
+                  onClick={() => setBreakdownType('expense')}
+                  aria-pressed={breakdownType === 'expense'}
+                >
+                  Expenses
+                </button>
+                <button
+                  id="breakdown-toggle-income"
+                  type="button"
+                  className={`btn ${breakdownType === 'income' ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ 
+                    padding: '0.26rem 0.8rem', 
+                    fontSize: '0.78rem', 
+                    fontWeight: 700, 
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'all 0.2s ease',
+                    background: breakdownType === 'income' ? 'var(--color-income)' : undefined,
+                    borderColor: breakdownType === 'income' ? 'var(--color-income)' : undefined,
+                    color: breakdownType === 'income' ? '#ffffff' : undefined,
+                    boxShadow: breakdownType === 'income' ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none'
+                  }}
+                  onClick={() => setBreakdownType('income')}
+                  aria-pressed={breakdownType === 'income'}
+                >
+                  Income
+                </button>
+              </div>
+            </div>
+
+            <span className="badge badge-neutral" style={{ fontSize: '0.8rem', padding: '0.26rem 0.75rem', fontWeight: 600 }}>
+              Total: {formatCurrency(categoryBreakdown.totalAmount, symbol)}
             </span>
           </div>
 
           {categoryBreakdown.items.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-              No expense transactions logged to categorize.
+            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-muted)' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                No {breakdownType === 'income' ? 'income' : 'expense'} transactions logged to categorize.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ marginTop: '0.85rem', fontSize: '0.82rem', padding: '0.4rem 0.9rem' }}
+                onClick={() => onOpenTransactionModal && onOpenTransactionModal(breakdownType)}
+              >
+                <Plus size={14} /> Add {breakdownType === 'income' ? 'Income' : 'Expense'} Entry
+              </button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -853,7 +923,7 @@ export default function Analytics({
                       cursor: 'pointer'
                     }}
                     title={`${cat.name}: ${cat.percentLabel} (${formatCurrency(cat.amount, symbol)}) • Click to view all history`}
-                    onClick={() => setSelectedCategoryHistory(cat)}
+                    onClick={() => handleOpenCategoryHistory(cat)}
                   />
                 ))}
               </div>
@@ -871,11 +941,11 @@ export default function Analytics({
                     key={cat.id}
                     role="button"
                     tabIndex={0}
-                    onClick={() => setSelectedCategoryHistory(cat)}
+                    onClick={() => handleOpenCategoryHistory(cat)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        setSelectedCategoryHistory(cat);
+                        handleOpenCategoryHistory(cat);
                       }
                     }}
                     className="category-breakdown-row-btn"
@@ -896,7 +966,7 @@ export default function Analytics({
                       <span style={{ fontSize: '1.25rem' }}>{cat.icon}</span>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{cat.name}</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--color-brand)', fontWeight: 500 }}>
+                        <span style={{ fontSize: '0.7rem', color: breakdownType === 'income' ? 'var(--color-income)' : 'var(--color-brand)', fontWeight: 500 }}>
                           Click to view history
                         </span>
                       </div>
@@ -904,8 +974,8 @@ export default function Analytics({
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{cat.percentLabel}</span>
-                      <span className="amount-val" style={{ fontSize: '0.92rem', fontWeight: 700 }}>
-                        {formatCurrency(cat.amount, symbol)}
+                      <span className={`amount-val ${breakdownType === 'income' ? 'income' : 'expense'}`} style={{ fontSize: '0.92rem', fontWeight: 700 }}>
+                        {breakdownType === 'income' ? '+' : ''}{formatCurrency(cat.amount, symbol)}
                       </span>
                       <ChevronRight size={15} color="var(--text-muted)" className="category-row-arrow" />
                     </div>
@@ -924,7 +994,7 @@ export default function Analytics({
         allTransactions={transactions}
         timeframe={timeframe}
         settings={settings}
-        onClose={() => setSelectedCategoryHistory(null)}
+        onClose={handleCloseCategoryHistory}
         onOpenTransactionModal={onOpenTransactionModal}
         onDeleteTransaction={onDeleteTransaction}
         onDuplicateTransaction={onDuplicateTransaction}

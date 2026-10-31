@@ -71,18 +71,21 @@ export const DEFAULT_SETTINGS = {
 
 export const CATEGORIES = {
   expense: [
-    { id: 'food', name: 'Eat Hotel', icon: '🍜', color: '#F97316' },
+    { id: 'food', name: 'Food', icon: '🍜', color: '#F97316' },
     { id: 'social', name: 'Social Life', icon: '🧑‍🤝‍🧑', color: '#EC4899' },
     { id: 'pets', name: 'Pets', icon: '🐶', color: '#B45309' },
     { id: 'transport', name: 'Transport', icon: '🚕', color: '#2563EB' },
-    { id: 'home_appliances', name: 'Home Appliances', icon: '🔌', color: '#0284C7' },
-    { id: 'cooking_products', name: 'Cooking Products', icon: '🍳', color: '#DC2626' },
+    { id: 'culture', name: 'Culture', icon: '🖼️', color: '#6366F1' },
+    { id: 'household', name: 'Household', icon: '🪑', color: '#0284C7' },
+    { id: 'apparel', name: 'Apparel', icon: '🧥', color: '#DC2626' },
     { id: 'beauty', name: 'Beauty', icon: '💄', color: '#F43F5E' },
     { id: 'health', name: 'Health', icon: '🧘', color: '#0D9488' },
     { id: 'education', name: 'Education', icon: '📙', color: '#EAB308' },
     { id: 'gift', name: 'Gift', icon: '🎁', color: '#C026D3' },
     { id: 'other_exp', name: 'Other', icon: '📦', color: '#64748B' },
     // Retain legacy IDs for backward compatibility with existing transactions:
+    { id: 'home_appliances', name: 'Home Appliances', icon: '🔌', color: '#0284C7' },
+    { id: 'cooking_products', name: 'Cooking Products', icon: '🍳', color: '#DC2626' },
     { id: 'housing', name: 'Rent & Housing', icon: '🏠', color: '#1E3A8A' },
     { id: 'utilities', name: 'Bills & Utilities', icon: '⚡', color: '#D97706' },
     { id: 'shopping', name: 'Shopping & Gear', icon: '🛍️', color: '#BE185D' },
@@ -100,12 +103,13 @@ export const CATEGORIES = {
 };
 
 export const MOBILE_KEYPAD_EXPENSE_CATEGORIES = [
-  { id: 'food', name: 'Eat Hotel', icon: '🍜', color: '#F97316' },
+  { id: 'food', name: 'Food', icon: '🍜', color: '#F97316' },
   { id: 'social', name: 'Social Life', icon: '🧑‍🤝‍🧑', color: '#EC4899' },
   { id: 'pets', name: 'Pets', icon: '🐶', color: '#B45309' },
   { id: 'transport', name: 'Transport', icon: '🚕', color: '#2563EB' },
-  { id: 'home_appliances', name: 'Home Appliances', icon: '🔌', color: '#0284C7' },
-  { id: 'cooking_products', name: 'Cooking Products', icon: '🍳', color: '#DC2626' },
+  { id: 'culture', name: 'Culture', icon: '🖼️', color: '#6366F1' },
+  { id: 'household', name: 'Household', icon: '🪑', color: '#0284C7' },
+  { id: 'apparel', name: 'Apparel', icon: '🧥', color: '#DC2626' },
   { id: 'beauty', name: 'Beauty', icon: '💄', color: '#F43F5E' },
   { id: 'health', name: 'Health', icon: '🧘', color: '#0D9488' },
   { id: 'education', name: 'Education', icon: '📙', color: '#EAB308' },
@@ -411,7 +415,8 @@ export function deleteGoal(id, userId) {
   const uid = userId || getActiveUserId();
   const key = getUserStorageKey(STORAGE_KEYS.GOALS, uid);
   const list = getGoals(uid);
-  const updated = list.filter(item => item.id !== id);
+  const goalId = typeof id === 'object' && id !== null ? (id.id || id) : id;
+  const updated = list.filter(item => String(item.id) !== String(goalId));
   setLocal(key, updated);
   return updated;
 }

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Calendar, ChevronLeft, ChevronRight, Calculator } from 'lucide-react';
 import { CATEGORIES, PAYMENT_METHODS, getCategoryInfo } from '../services/storage';
-import MobileAmountKeypad from './MobileAmountKeypad';
+import { pushModalNavigation, popModalNavigation } from '../services/navigation';
+import MobileCategoryPicker from './MobileCategoryPicker';
 
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES = [
@@ -26,10 +27,7 @@ export default function TransactionModal({
   const [time, setTime] = useState('');
   const [note, setNote] = useState('');
 
-  // Keypad & Currency state
-  const [currencySymbol, setCurrencySymbol] = useState(settings?.currencySymbol || '₹');
-  const [isKeypadOpen, setIsKeypadOpen] = useState(false);
-  const [keypadTab, setKeypadTab] = useState('amount'); // 'amount' | 'category'
+  const currencySymbol = settings?.currencySymbol || '₹';
 
   // Combined categories for display
   const allCategories = useMemo(() => {
@@ -60,11 +58,6 @@ export default function TransactionModal({
   }, []);
 
 
-  useEffect(() => {
-    if (settings?.currencySymbol) {
-      setCurrencySymbol(settings.currencySymbol);
-    }
-  }, [settings?.currencySymbol]);
 
   // Helper for current HH:MM in local time
   const getNowTime = () => {
@@ -87,6 +80,7 @@ export default function TransactionModal({
   const [viewYear, setViewYear] = useState(currYear);
   const [viewMonth, setViewMonth] = useState(currMonth);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isMobileCategoryOpen, setIsMobileCategoryOpen] = useState(false);
   const datePickerRef = useRef(null);
 
   // Sync state on open or edit
@@ -115,7 +109,7 @@ export default function TransactionModal({
       setNote('');
     }
     setIsDatePickerOpen(false);
-    setIsKeypadOpen(false);
+    setIsMobileCategoryOpen(false);
   }, [editingTransaction, initialType, isOpen]);
 
   // Sync picker viewed year/month with current parsed date
@@ -124,11 +118,66 @@ export default function TransactionModal({
     setViewMonth(currMonth);
   }, [currYear, currMonth, isOpen]);
 
+  const handleOpenDatePicker = () => {
+    setIsDatePickerOpen(true);
+    pushModalNavigation('tx_date_picker', () => setIsDatePickerOpen(false));
+  };
+
+  const handleCloseDatePicker = () => {
+    popModalNavigation('tx_date_picker');
+  };
+
+  const handleToggleDatePicker = () => {
+    if (isDatePickerOpen) {
+      handleCloseDatePicker();
+    } else {
+      handleOpenDatePicker();
+    }
+  };
+
+  const handleOpenMobileCategory = () => {
+    // Dismiss any active mobile keyboard/autofill before opening category picker
+    if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    setIsMobileCategoryOpen(true);
+    pushModalNavigation('tx_mobile_category', () => setIsMobileCategoryOpen(false));
+  };
+
+  const handleCloseMobileCategory = () => {
+    setIsMobileCategoryOpen(false);
+    popModalNavigation('tx_mobile_category');
+  };
+
+  const handleToggleMobileCategory = () => {
+    if (isMobileCategoryOpen) {
+      handleCloseMobileCategory();
+    } else {
+      handleOpenMobileCategory();
+    }
+  };
+
+  const handleSelectMobileCategory = (catId) => {
+    setCategory(catId);
+    const isIncome = CATEGORIES.income.some(c => c.id === catId);
+    const isExpense = CATEGORIES.expense.some(c => c.id === catId);
+
+    if (isIncome && type !== 'income') {
+      setType('income');
+    } else if (isExpense && type !== 'expense') {
+      setType('expense');
+    }
+
+    setTimeout(() => {
+      handleCloseMobileCategory();
+    }, 160);
+  };
+
   // Close picker on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
-        setIsDatePickerOpen(false);
+        handleCloseDatePicker();
       }
     }
     if (isDatePickerOpen) {
@@ -154,7 +203,7 @@ export default function TransactionModal({
   const handleSelectDay = (dayNum) => {
     const newDateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
     setDate(newDateStr);
-    setIsDatePickerOpen(false);
+    handleCloseDatePicker();
   };
 
   // Year change
@@ -173,7 +222,7 @@ export default function TransactionModal({
     setDate(todayStr);
     setViewYear(now.getFullYear());
     setViewMonth(now.getMonth());
-    setIsDatePickerOpen(false);
+    handleCloseDatePicker();
   };
 
   // Compute days for the month view
@@ -242,12 +291,10 @@ export default function TransactionModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const numAmount = parseFloat(amount);
+    const cleanAmount = String(amount).replace(/,/g, '.');
+    const numAmount = parseFloat(cleanAmount);
     if (!numAmount || numAmount <= 0) {
       alert('Please enter a valid amount greater than zero.');
-      if (isMobileDevice) {
-        setIsKeypadOpen(true);
-      }
       return;
     }
 
@@ -264,33 +311,18 @@ export default function TransactionModal({
     });
   };
 
-  // Open the custom keypad or category pad strictly on mobile view (width <= 768px). Never on laptop / PC.
-  const handleAmountFocusOrClick = (e) => {
-    if (isMobileDevice) {
-      if (e && e.target && e.target.blur) {
-        e.target.blur();
-      }
-      setKeypadTab('amount');
-      setIsKeypadOpen(true);
-    } else {
-      setIsKeypadOpen(false);
-    }
-  };
-
-  const handleCategoryMobileClick = (e) => {
-    if (isMobileDevice) {
-      if (e && e.target && e.target.blur) {
-        e.target.blur();
-      }
-      setKeypadTab('category');
-      setIsKeypadOpen(true);
-    }
-  };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div 
+      className="modal-overlay" 
+      onClick={(e) => {
+        if (e.target === e.currentTarget && typeof onClose === 'function') {
+          onClose();
+        }
+      }}
+    >
       <div 
-        className={`add-tx-modal-dialog ${isMobileDevice && isKeypadOpen ? 'keypad-active' : ''}`} 
+        className="add-tx-modal-dialog" 
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -323,15 +355,22 @@ export default function TransactionModal({
           <button 
             type="button" 
             className="add-tx-close-btn" 
-            onClick={onClose} 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof onClose === 'function') {
+                onClose();
+              }
+            }} 
             aria-label="Close"
+            title="Close"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="add-tx-body">
+        <form onSubmit={handleSubmit} autoComplete="off" className={`add-tx-body ${isMobileCategoryOpen ? 'mobile-cat-active' : ''}`}>
           {/* Row 1: Type (Pill Toggle) and Amount */}
           <div className="add-tx-row-2col">
             <div className="add-tx-field">
@@ -358,20 +397,23 @@ export default function TransactionModal({
               <label className="add-tx-label" htmlFor="tx-amount">Amount</label>
               <input
                 id="tx-amount"
-                type={isMobileDevice ? "text" : "number"}
+                type="number"
                 step="any"
                 min="0.01"
                 required
                 autoFocus={!isMobileDevice}
-                readOnly={isMobileDevice}
+                autoComplete="off"
+                name="tx_amount_field"
+                data-lpignore="true"
+                data-form-type="other"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                inputMode="decimal"
                 className="add-tx-input add-tx-amount-input"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                onFocus={handleAmountFocusOrClick}
-                onClick={handleAmountFocusOrClick}
-                inputMode={isMobileDevice ? "none" : undefined}
-                style={{ cursor: isMobileDevice ? 'pointer' : 'text' }}
               />
             </div>
           </div>
@@ -380,7 +422,7 @@ export default function TransactionModal({
           {/* Row 3: Category */}
           <div className="add-tx-field">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-              <label className="add-tx-label" htmlFor="tx-category" style={{ margin: 0 }}>Category</label>
+              <label className="add-tx-label" htmlFor={isMobileDevice ? "tx-category-mobile" : "tx-category"} style={{ margin: 0 }}>Category</label>
               {currentCategoryMeta && (
                 <span 
                   style={{
@@ -457,36 +499,15 @@ export default function TransactionModal({
               </div>
             )}
 
-            <div 
-              className="add-tx-select-wrapper"
-              style={{
-                borderLeft: `4px solid ${selectedCategoryColor}`,
-                borderRadius: '8px',
-                transition: 'border-color 0.25s ease'
-              }}
-            >
-              {isMobileDevice ? (
-                <button
-                  type="button"
-                  id="tx-category"
-                  className="add-tx-select add-tx-category-trigger-btn"
-                  onClick={handleCategoryMobileClick}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.15rem' }}>{currentCategoryMeta?.icon || '🏷️'}</span>
-                    <span style={{ fontWeight: 600, color: selectedCategoryColor }}>{currentCategoryMeta?.name || category}</span>
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>▼</span>
-                </button>
-              ) : (
+            {!isMobileDevice ? (
+              <div 
+                className="add-tx-select-wrapper"
+                style={{
+                  borderLeft: `4px solid ${selectedCategoryColor}`,
+                  borderRadius: '8px',
+                  transition: 'border-color 0.25s ease'
+                }}
+              >
                 <select
                   id="tx-category"
                   className="add-tx-select"
@@ -522,8 +543,52 @@ export default function TransactionModal({
                     </>
                   )}
                 </select>
-              )}
-            </div>
+              </div>
+            ) : (
+              /* Mobile View Category Trigger Button with active colored underline */
+              <>
+                <button
+                  type="button"
+                  id="tx-category-mobile"
+                  className={`mobile-tx-cat-trigger ${isMobileCategoryOpen ? 'active' : ''}`}
+                  onClick={handleToggleMobileCategory}
+                  style={{
+                    borderBottom: isMobileCategoryOpen 
+                      ? `2px solid ${type === 'income' ? 'var(--color-income, #10b981)' : 'var(--color-expense, #ef4444)'}`
+                      : '1px solid var(--border-medium)',
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={isMobileCategoryOpen}
+                  title="Tap to select category"
+                >
+                  <div className="mobile-tx-cat-trigger-content">
+                    <span className="mobile-tx-cat-trigger-icon">{currentCategoryMeta?.icon || '🏷️'}</span>
+                    <span className="mobile-tx-cat-trigger-name">{currentCategoryMeta?.name || 'Select Category'}</span>
+                  </div>
+                  <span 
+                    className="mobile-tx-cat-trigger-status"
+                    style={{
+                      color: isMobileCategoryOpen 
+                        ? (type === 'income' ? 'var(--color-income, #10b981)' : 'var(--color-expense, #ef4444)')
+                        : 'var(--text-muted)'
+                    }}
+                  >
+                    {isMobileCategoryOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {/* Mobile View 3-Column Category Picker (Inline in yellow area) */}
+                {isMobileCategoryOpen && (
+                  <MobileCategoryPicker
+                    isOpen={isMobileCategoryOpen}
+                    onClose={handleCloseMobileCategory}
+                    category={category}
+                    onSelectCategory={handleSelectMobileCategory}
+                    type={type}
+                  />
+                )}
+              </>
+            )}
           </div>
 
           {/* Row 4: Payment Method */}
@@ -561,7 +626,7 @@ export default function TransactionModal({
                 type="button"
                 id="tx-date"
                 className={`add-tx-input add-tx-date-trigger-btn ${isDatePickerOpen ? 'active' : ''}`}
-                onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                onClick={handleToggleDatePicker}
                 aria-haspopup="dialog"
                 aria-expanded={isDatePickerOpen}
                 title="Click to view 12 months and calendar"
@@ -583,7 +648,7 @@ export default function TransactionModal({
                 <>
                   <div 
                     className="tx-date-picker-backdrop" 
-                    onClick={() => setIsDatePickerOpen(false)} 
+                    onClick={handleCloseDatePicker} 
                   />
                   <div 
                     className="tx-date-picker-popover" 
@@ -729,6 +794,7 @@ export default function TransactionModal({
               type="text"
               className="add-tx-input"
               placeholder="Optional notes"
+              autoComplete="off"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -739,7 +805,13 @@ export default function TransactionModal({
             <button 
               type="button" 
               className="add-tx-cancel-btn" 
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof onClose === 'function') {
+                  onClose();
+                }
+              }}
             >
               Cancel
             </button>
@@ -752,27 +824,7 @@ export default function TransactionModal({
           </div>
         </form>
 
-        {/* Custom Numeric Keypad & Category Pad Sheet - Strictly Mobile View Only */}
-        {isMobileDevice && (
-          <MobileAmountKeypad
-            isOpen={isKeypadOpen}
-            activeTab={keypadTab}
-            onTabChange={(tab) => setKeypadTab(tab)}
-            amount={amount}
-            onChange={(newAmt) => setAmount(newAmt)}
-            category={category}
-            onCategoryChange={(newCat) => setCategory(newCat)}
-            type={type}
-            onTypeChange={(newType) => setType(newType)}
-            currencySymbol={currencySymbol}
-            onCurrencyChange={(sym) => setCurrencySymbol(sym)}
-            onDone={(finalAmt) => {
-              setAmount(finalAmt);
-              setIsKeypadOpen(false);
-            }}
-            onClose={() => setIsKeypadOpen(false)}
-          />
-        )}
+
       </div>
     </div>
   );

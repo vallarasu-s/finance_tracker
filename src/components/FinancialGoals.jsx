@@ -144,192 +144,409 @@ export default function FinancialGoals({
                 }}
                 style={{ cursor: 'pointer' }}
               >
-                {/* Header */}
-                <div className="goal-card-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div className="goal-badge-icon">
-                      <span>{goal.icon || '🎯'}</span>
-                    </div>
-                    <div>
-                      <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                        {goal.title}
-                      </h4>
-                      {goal.notes && (
-                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                          {goal.notes}
-                        </p>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem' }}>
-                        <span 
-                          className="badge badge-goal"
-                          style={{
-                            fontSize: '0.7rem',
-                            padding: '0.15rem 0.45rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            background: 'rgba(6, 182, 212, 0.1)',
-                            color: 'var(--color-goal)'
-                          }}
-                        >
-                          <Receipt size={11} />
-                          <span>{historyCount} {historyCount === 1 ? 'transaction' : 'transactions'}</span>
-                        </span>
+                {/* Desktop View Layout (Preserved untouched for PC/Laptop > 768px) */}
+                <div className="goal-desktop-layout">
+                  {/* Header */}
+                  <div className="goal-card-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div className="goal-badge-icon">
+                        <span>{goal.icon || '🎯'}</span>
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                          {goal.title}
+                        </h4>
+                        {goal.notes && (
+                          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                            {goal.notes}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem' }}>
+                          <span 
+                            className="badge badge-goal"
+                            style={{
+                              fontSize: '0.7rem',
+                              padding: '0.15rem 0.45rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              background: 'rgba(6, 182, 212, 0.1)',
+                              color: 'var(--color-goal)'
+                            }}
+                          >
+                            <Receipt size={11} />
+                            <span>{historyCount} {historyCount === 1 ? 'transaction' : 'transactions'}</span>
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <button 
-                      className="btn btn-ghost btn-icon-only"
-                      title="Edit Goal"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenGoalModal(goal);
-                      }}
-                    >
-                      <Edit2 size={15} />
-                    </button>
-                    <button 
-                      className="btn btn-ghost btn-icon-only"
-                      style={{ color: 'var(--color-expense)' }}
-                      title="Delete Goal"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteGoal(goal.id);
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Circular Progress Ring & Numbers */}
-                <div className="goal-progress-section">
-                  <div className="goal-numbers">
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Current Savings
-                    </span>
-                    <span className="goal-current-amount">
-                      {formatCurrency(current, symbol)}
-                    </span>
-                    <span className="goal-target-amount">
-                      Target: <strong>{formatCurrency(target, symbol)}</strong>
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: isCompleted ? 'var(--color-income)' : 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                      {isCompleted ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 700 }}>
-                          <CheckCircle2 size={15} /> Goal Completed! 🏆
-                        </span>
-                      ) : (
-                        <span>Remaining: <strong className="amount-val">{formatCurrency(remaining, symbol)}</strong></span>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Circular Progress Component (from modern-web-guidance pattern) */}
-                  <div className="progress-ring-container">
                     <div 
-                      className="progress-ring-circle"
-                      style={{
-                        background: `conic-gradient(${isCompleted ? '#10B981' : '#06B6D4'} ${percent * 3.6}deg, rgba(255, 255, 255, 0.08) 0deg)`
+                      className="goal-card-actions"
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.35rem', 
+                        position: 'relative', 
+                        zIndex: 10 
                       }}
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
                     >
-                      <div className="progress-ring-inner">
-                        <span className="progress-ring-percent amount-val">
-                          {percent}%
-                        </span>
-                        <span className="progress-ring-subtext">
-                          {isCompleted ? 'Done' : 'Saved'}
-                        </span>
-                      </div>
+                      <button 
+                        type="button"
+                        className="btn btn-ghost btn-icon-only goal-action-btn goal-edit-btn"
+                        title="Edit Goal"
+                        aria-label="Edit Goal"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onOpenGoalModal(goal);
+                        }}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn btn-ghost btn-icon-only goal-action-btn goal-delete-btn"
+                        style={{ color: 'var(--color-expense)' }}
+                        title="Delete Goal"
+                        aria-label="Delete Goal"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteGoal(goal);
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Projections & Timeline */}
-                <div style={{
-                  padding: '0.85rem 1rem',
-                  background: 'var(--bg-elevated)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.35rem',
-                  fontSize: '0.8rem'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <Calendar size={13} /> Target Date:
-                    </span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {goal.targetDate || 'Flexible'}
-                    </span>
-                  </div>
-
-                  {!isCompleted && daysLeft !== null && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                        <Clock size={13} /> Pace Needed:
+                  {/* Circular Progress Ring & Numbers */}
+                  <div className="goal-progress-section">
+                    <div className="goal-numbers">
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                        Current Savings
                       </span>
-                      <span style={{ fontWeight: 700, color: isOverdue ? 'var(--color-expense)' : 'var(--color-brand)' }}>
-                        {isOverdue ? (
-                          'Target date passed'
+                      <span className="goal-current-amount">
+                        {formatCurrency(current, symbol)}
+                      </span>
+                      <span className="goal-target-amount">
+                        Target: <strong>{formatCurrency(target, symbol)}</strong>
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: isCompleted ? 'var(--color-income)' : 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                        {isCompleted ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 700 }}>
+                            <CheckCircle2 size={15} /> Goal Completed! 🏆
+                          </span>
                         ) : (
-                          `${formatCurrency(dailyNeeded, symbol)} / day`
+                          <span>Remaining: <strong className="amount-val">{formatCurrency(remaining, symbol)}</strong></span>
                         )}
                       </span>
                     </div>
-                  )}
 
-                  {!isCompleted && daysLeft > 0 && (
+                    {/* Circular Progress Component (from modern-web-guidance pattern) */}
+                    <div className="progress-ring-container">
+                      <div 
+                        className="progress-ring-circle"
+                        style={{
+                          background: `conic-gradient(${isCompleted ? '#10B981' : '#06B6D4'} ${percent * 3.6}deg, rgba(255, 255, 255, 0.08) 0deg)`
+                        }}
+                      >
+                        <div className="progress-ring-inner">
+                          <span className="progress-ring-percent amount-val">
+                            {percent}%
+                          </span>
+                          <span className="progress-ring-subtext">
+                            {isCompleted ? 'Done' : 'Saved'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Projections & Timeline */}
+                  <div style={{
+                    padding: '0.85rem 1rem',
+                    background: 'var(--bg-elevated)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                    fontSize: '0.8rem'
+                  }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>
-                        Countdown:
+                      <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Calendar size={13} /> Target Date:
                       </span>
-                      <span style={{ color: 'var(--color-goal)', fontWeight: 600 }}>
-                        {daysLeft} days remaining
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {goal.targetDate || 'Flexible'}
                       </span>
                     </div>
-                  )}
+
+                    {!isCompleted && daysLeft !== null && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Clock size={13} /> Pace Needed:
+                        </span>
+                        <span style={{ fontWeight: 700, color: isOverdue ? 'var(--color-expense)' : 'var(--color-brand)' }}>
+                          {isOverdue ? (
+                            'Target date passed'
+                          ) : (
+                            `${formatCurrency(dailyNeeded, symbol)} / day`
+                          )}
+                        </span>
+                      </div>
+                    )}
+
+                    {!isCompleted && daysLeft > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          Countdown:
+                        </span>
+                        <span style={{ color: 'var(--color-goal)', fontWeight: 600 }}>
+                          {daysLeft} days remaining
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer Action: History & Add/Withdraw Funds */}
+                  <div className="goal-card-footer">
+                    <button 
+                      type="button"
+                      className="btn btn-ghost"
+                      style={{
+                        padding: '0.45rem 0.75rem',
+                        fontSize: '0.82rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        color: 'var(--color-goal)',
+                        borderColor: 'rgba(6, 182, 212, 0.25)',
+                        borderRadius: 'var(--radius-md)'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenGoalDetail && onOpenGoalDetail(goal);
+                      }}
+                      title="View transaction history"
+                    >
+                      <History size={14} />
+                      <span>History ({historyCount})</span>
+                    </button>
+
+                    <button 
+                      className="btn btn-primary"
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenDepositModal(goal);
+                      }}
+                    >
+                      <Plus size={15} />
+                      <span>Deposit Funds</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Footer Action: History & Add/Withdraw Funds */}
-                <div className="goal-card-footer">
-                  <button 
-                    type="button"
-                    className="btn btn-ghost"
-                    style={{
-                      padding: '0.45rem 0.75rem',
-                      fontSize: '0.82rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      color: 'var(--color-goal)',
-                      borderColor: 'rgba(6, 182, 212, 0.25)',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenGoalDetail && onOpenGoalDetail(goal);
-                    }}
-                    title="View transaction history"
-                  >
-                    <History size={14} />
-                    <span>History ({historyCount})</span>
-                  </button>
+                {/* Mobile-Only 2x2 Grid View Layout (matches user yellow marked grid) */}
+                <div className="goal-mobile-grid-layout">
+                  {/* Top Section: Top-Left (Info & Savings) & Top-Right (Actions & Progress Ring) */}
+                  <div className="goal-mobile-top-section">
+                    {/* Quadrant 1 (Top-Left) */}
+                    <div className="goal-mobile-top-left">
+                      <div className="goal-mobile-tl-header">
+                        <div className="goal-badge-icon goal-mobile-badge-icon">
+                          <span>{goal.icon || '🎯'}</span>
+                        </div>
+                        <div className="goal-mobile-title-info">
+                          <h4 className="goal-mobile-title">{goal.title}</h4>
+                          {goal.notes && (
+                            <p className="goal-mobile-notes">{goal.notes}</p>
+                          )}
+                          <span className="badge badge-goal goal-mobile-txn-badge">
+                            <Receipt size={10} />
+                            <span>{historyCount} {historyCount === 1 ? 'transaction' : 'transactions'}</span>
+                          </span>
+                        </div>
+                      </div>
 
-                  <button 
-                    className="btn btn-primary"
-                    style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenDepositModal(goal);
-                    }}
-                  >
-                    <Plus size={15} />
-                    <span>Deposit Funds</span>
-                  </button>
+                      <div className="goal-mobile-savings-block">
+                        <span className="goal-mobile-savings-label">
+                          Current Savings
+                        </span>
+                        <span className="goal-mobile-current-amount amount-val">
+                          {formatCurrency(current, symbol)}
+                        </span>
+                        <span className="goal-mobile-target-amount">
+                          Target: <strong>{formatCurrency(target, symbol)}</strong>
+                        </span>
+                        <span className="goal-mobile-remaining-amount">
+                          {isCompleted ? (
+                            <span style={{ color: 'var(--color-income)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <CheckCircle2 size={12} /> Completed! 🏆
+                            </span>
+                          ) : (
+                            <span>Remaining: <strong className="amount-val">{formatCurrency(remaining, symbol)}</strong></span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quadrant 2 (Top-Right) */}
+                    <div className="goal-mobile-top-right">
+                      <div 
+                        className="goal-mobile-tr-actions"
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                      >
+                        <button 
+                          type="button"
+                          className="btn btn-ghost btn-icon-only goal-action-btn goal-edit-btn goal-mobile-action-btn"
+                          title="Edit Goal"
+                          aria-label="Edit Goal"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onOpenGoalModal(goal);
+                          }}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn btn-ghost btn-icon-only goal-action-btn goal-delete-btn goal-mobile-action-btn"
+                          style={{ color: 'var(--color-expense)' }}
+                          title="Delete Goal"
+                          aria-label="Delete Goal"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDeleteGoal(goal);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      <div className="goal-mobile-ring-wrap">
+                        <div className="progress-ring-container goal-mobile-progress-ring">
+                          <div 
+                            className="progress-ring-circle"
+                            style={{
+                              background: `conic-gradient(${isCompleted ? '#10B981' : '#06B6D4'} ${percent * 3.6}deg, rgba(255, 255, 255, 0.08) 0deg)`
+                            }}
+                          >
+                            <div className="progress-ring-inner">
+                              <span className="progress-ring-percent amount-val">
+                                {percent}%
+                              </span>
+                              <span className="progress-ring-subtext">
+                                {isCompleted ? 'Done' : 'Saved'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Section: Bottom-Left (Labels & History Button) & Bottom-Right (Values & Deposit Button) */}
+                  <div className="goal-mobile-bottom-section">
+                    {/* Quadrant 3 (Bottom-Left Box) */}
+                    <div className="goal-mobile-box goal-mobile-bottom-left">
+                      <div className="goal-mobile-info-list">
+                        <div className="goal-mobile-row">
+                          <span className="goal-mobile-label">
+                            <Calendar size={12} /> Target Date:
+                          </span>
+                        </div>
+                        <div className="goal-mobile-row">
+                          <span className="goal-mobile-label">
+                            <Clock size={12} /> Pace Needed:
+                          </span>
+                        </div>
+                        <div className="goal-mobile-row">
+                          <span className="goal-mobile-label">
+                            Countdown:
+                          </span>
+                        </div>
+                      </div>
+
+                      <button 
+                        type="button"
+                        className="btn btn-ghost goal-mobile-grid-btn goal-mobile-history-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenGoalDetail && onOpenGoalDetail(goal);
+                        }}
+                        title="View transaction history"
+                      >
+                        <History size={13} />
+                        <span>History ({historyCount})</span>
+                      </button>
+                    </div>
+
+                    {/* Quadrant 4 (Bottom-Right Box) */}
+                    <div className="goal-mobile-box goal-mobile-bottom-right">
+                      <div className="goal-mobile-info-list">
+                        <div className="goal-mobile-row">
+                          <span className="goal-mobile-value">
+                            {goal.targetDate || 'Flexible'}
+                          </span>
+                        </div>
+                        <div className="goal-mobile-row">
+                          <span 
+                            className="goal-mobile-value"
+                            style={{
+                              fontWeight: 700,
+                              color: isCompleted ? 'var(--color-income)' : (isOverdue ? 'var(--color-expense)' : 'var(--color-brand)')
+                            }}
+                          >
+                            {isCompleted ? 'Achieved 🏆' : (
+                              isOverdue ? 'Target passed' : (
+                                dailyNeeded ? `${formatCurrency(dailyNeeded, symbol)} / day` : 'Flexible'
+                              )
+                            )}
+                          </span>
+                        </div>
+                        <div className="goal-mobile-row">
+                          <span 
+                            className="goal-mobile-value"
+                            style={{
+                              color: isCompleted ? 'var(--color-income)' : 'var(--color-goal)',
+                              fontWeight: 600
+                            }}
+                          >
+                            {isCompleted ? 'Completed' : (
+                              daysLeft !== null && daysLeft > 0 ? `${daysLeft} days remaining` : (
+                                daysLeft === 0 ? 'Due today' : (
+                                  isOverdue ? 'Overdue' : 'No deadline'
+                                )
+                              )
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button 
+                        type="button"
+                        className="btn btn-primary goal-mobile-grid-btn goal-mobile-deposit-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenDepositModal(goal);
+                        }}
+                      >
+                        <Plus size={14} />
+                        <span>Deposit Funds</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             );

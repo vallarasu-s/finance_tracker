@@ -61,6 +61,8 @@ export default function CategoryHistoryModal({
     }
   }, [isOpen, category?.id]);
 
+  const isIncomeCat = category?.type === 'income';
+
   // All transactions matching this category
   const categoryTransactions = useMemo(() => {
     if (!category || !Array.isArray(allTransactions)) return [];
@@ -68,6 +70,7 @@ export default function CategoryHistoryModal({
     const targetName = (category.name || '').toLowerCase().trim();
 
     return allTransactions.filter(t => {
+      if (category.type && t.type && t.type !== category.type) return false;
       const cat = (t.category || '').toLowerCase().trim();
       return cat === targetId || cat === targetName;
     });
@@ -149,7 +152,7 @@ export default function CategoryHistoryModal({
                 </span>
               </div>
               <p className="cat-history-subtitle">
-                Complete breakdown of all expenses recorded under {category.name}
+                Complete breakdown of all {isIncomeCat ? 'income' : 'expenses'} recorded under {category.name}
               </p>
             </div>
           </div>
@@ -166,12 +169,14 @@ export default function CategoryHistoryModal({
 
         {/* Modal Scrollable Body */}
         <div className="cat-history-body">
-          {/* Key Metric Highlights Grid (Total Spent, Total Entries, Highest Entry) */}
+          {/* Key Metric Highlights Grid (Total Spent / Earned, Total Entries, Highest Entry) */}
           <div className="cat-history-metrics-grid">
             <div className="cat-history-metric-card">
-              <span className="cat-history-metric-label">Total Spent</span>
-              <span className="cat-history-metric-val amount-val expense">
-                {formatCurrency(stats.total, symbol)}
+              <span className="cat-history-metric-label">
+                {isIncomeCat ? 'Total Earned' : 'Total Spent'}
+              </span>
+              <span className={`cat-history-metric-val amount-val ${isIncomeCat ? 'income' : 'expense'}`}>
+                {isIncomeCat ? '+' : ''}{formatCurrency(stats.total, symbol)}
               </span>
             </div>
 
@@ -184,8 +189,8 @@ export default function CategoryHistoryModal({
 
             <div className="cat-history-metric-card">
               <span className="cat-history-metric-label">Highest Entry</span>
-              <span className="cat-history-metric-val amount-val expense">
-                {formatCurrency(stats.max, symbol)}
+              <span className={`cat-history-metric-val amount-val ${isIncomeCat ? 'income' : 'expense'}`}>
+                {isIncomeCat ? '+' : ''}{formatCurrency(stats.max, symbol)}
               </span>
             </div>
           </div>
@@ -235,7 +240,7 @@ export default function CategoryHistoryModal({
                 <h4 className="cat-history-empty-title">No Transactions Found</h4>
                 <p className="cat-history-empty-desc">
                   {categoryTransactions.length === 0
-                    ? `No expenses have been recorded for ${category.name} yet.`
+                    ? `No ${isIncomeCat ? 'income has' : 'expenses have'} been recorded for ${category.name} yet.`
                     : 'No transactions recorded for this period.'}
                 </p>
                 <button
@@ -243,17 +248,17 @@ export default function CategoryHistoryModal({
                   className="btn btn-primary"
                   onClick={() => {
                     onClose();
-                    onOpenTransactionModal && onOpenTransactionModal('expense', { category: category.id });
+                    onOpenTransactionModal && onOpenTransactionModal(category.type || 'expense', { category: category.id });
                   }}
                 >
-                  <Plus size={15} /> Add {category.name} Expense
+                  <Plus size={15} /> Add {category.name} {isIncomeCat ? 'Income' : 'Expense'}
                 </button>
               </div>
             ) : (
               displayedTransactions.map((tx) => {
                 const pm = getPaymentMethodInfo(tx.paymentMethod);
-                const title = tx.recipient || tx.note || `${category.name} Expense`;
                 const isInc = tx.type === 'income';
+                const title = tx.recipient || tx.note || `${category.name} ${isInc ? 'Income' : 'Expense'}`;
 
                 return (
                   <div key={tx.id} className="cat-history-tx-card">
@@ -350,10 +355,10 @@ export default function CategoryHistoryModal({
             className="btn btn-primary cat-history-primary-action-btn"
             onClick={() => {
               onClose();
-              onOpenTransactionModal && onOpenTransactionModal('expense', { category: category.id });
+              onOpenTransactionModal && onOpenTransactionModal(category.type || 'expense', { category: category.id });
             }}
           >
-            <Plus size={16} /> Add {category.name} Expense
+            <Plus size={16} /> Add {category.name} {isIncomeCat ? 'Income' : 'Expense'}
           </button>
 
           <div className="cat-history-footer-secondary">

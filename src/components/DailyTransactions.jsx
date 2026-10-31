@@ -662,16 +662,6 @@ export default function DailyTransactions({
                 >
                   Net: {selectedDayNet >= 0 ? '+' : ''}{formatCurrency(selectedDayNet, symbol)}
                 </span>
-
-                <button
-                  type="button"
-                  className="selected-day-btn-add"
-                  onClick={() => onOpenTransactionModal && onOpenTransactionModal('expense', { date: selectedDate })}
-                  title="Add Entry on this date"
-                >
-                  <Plus size={14} />
-                  <span>Add Entry</span>
-                </button>
               </div>
             </div>
 
@@ -849,17 +839,6 @@ export default function DailyTransactions({
               </div>
             )}
           </div>
-
-          {/* Floating Action Button (Matches Screenshot Red/Coral + Button) */}
-          <button
-            type="button"
-            className="calendar-floating-add-btn"
-            title={`Add Transaction for ${selectedDate}`}
-            aria-label="Add Transaction"
-            onClick={() => onOpenTransactionModal && onOpenTransactionModal('expense', { date: selectedDate })}
-          >
-            <Plus size={28} strokeWidth={2.5} />
-          </button>
         </div>
       )}
 

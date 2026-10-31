@@ -1,14 +1,35 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Delete, Calculator, Globe, X, Check, Pencil, Plus } from 'lucide-react';
+import { 
+  Delete, 
+  Calculator, 
+  Languages, 
+  X, 
+  Check, 
+  Pencil, 
+  Plus, 
+  LayoutGrid, 
+  Smile, 
+  Settings, 
+  Palette, 
+  MicOff, 
+  ChevronDown, 
+  KeyRound, 
+  CreditCard, 
+  MapPin 
+} from 'lucide-react';
 import { CURRENCIES, CATEGORIES, MOBILE_KEYPAD_EXPENSE_CATEGORIES } from '../services/storage';
+import { pushModalNavigation, popModalNavigation } from '../services/navigation';
 
 /**
- * MobileAmountKeypad / MobileInputPad
- * Custom mobile input pad matching the reference screenshots.
- * Provides:
- * 1. 123 Amount Pad (Numeric keypad + Quick currency switcher + Calculator)
- * 2. Category Pad (Header: Category with pencil & X, 3-column category grid matching Image 2)
- * Strictly enabled on mobile devices only (screen width <= 768px).
+ * MobileAmountKeypad
+ * Redesigned to replicate the native Gboard numeric keyboard aesthetic on Android:
+ * - Dark slate/charcoal container with rounded top
+ * - Gboard autofill header row (with mode tabs & currency)
+ * - Gboard quick action toolbar (Grid, Smile, GIF, Settings, Languages, Palette, Calculator, MicOff)
+ * - 4x4 rounded pill buttons with authentic dark slate styling
+ * - Distinct teal action button (➔|) for submission/done
+ * - Bottom dismiss chevron (˅) and gesture navigation bar
+ * - Strictly enabled on mobile devices only (screen width <= 768px).
  */
 export default function MobileAmountKeypad({
   isOpen,
@@ -72,19 +93,11 @@ export default function MobileAmountKeypad({
     }
   };
 
-  // Quick currencies in Amount pad
-  const quickCurrencies = [
-    { symbol: '$', code: 'USD', name: 'USD' },
-    { symbol: '₹', code: 'INR', name: 'INR' },
-  ];
-  if (selectedCurrency !== '$' && selectedCurrency !== '₹') {
-    quickCurrencies.push({ symbol: selectedCurrency, code: selectedCurrency, name: selectedCurrency });
-  }
-
   // Safe arithmetic evaluator
   const safeEvaluate = useCallback((expr) => {
     if (!expr) return 0;
     let clean = String(expr).trim().replace(/[+\-*/.]+$/, '');
+    clean = clean.replace(/,/g, '.');
     clean = clean.replace(/[^0-9+\-*/.]/g, '');
     if (!clean) return 0;
     try {
@@ -106,7 +119,7 @@ export default function MobileAmountKeypad({
   const triggerHaptic = () => {
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate(12);
+        navigator.vibrate(10);
       } catch {
         // ignore
       }
@@ -156,6 +169,11 @@ export default function MobileAmountKeypad({
     });
   };
 
+  const handleComma = () => {
+    // Comma behaves like decimal separator for intl support
+    handleDecimal();
+  };
+
   const handleOperator = (op) => {
     triggerHaptic();
     setInternalValue((prev) => {
@@ -172,6 +190,14 @@ export default function MobileAmountKeypad({
       if (onChange) onChange(next);
       return next;
     });
+  };
+
+  const handleSpaceOrPlus = () => {
+    triggerHaptic();
+    // In Gboard numeric, space key acts as quick addition/separator
+    if (internalValue && /[0-9.]$/.test(internalValue)) {
+      handleOperator('+');
+    }
   };
 
   const handleBackspace = () => {
@@ -192,7 +218,7 @@ export default function MobileAmountKeypad({
       triggerHaptic();
       setInternalValue('');
       if (onChange) onChange('');
-    }, 600);
+    }, 550);
   };
 
   const handleBackspaceEnd = () => {
@@ -202,11 +228,20 @@ export default function MobileAmountKeypad({
     }
   };
 
+  const handleOpenCurrencyModal = () => {
+    setShowCurrencyModal(true);
+    pushModalNavigation('keypad_currency_modal', () => setShowCurrencyModal(false));
+  };
+
+  const handleCloseCurrencyModal = () => {
+    popModalNavigation('keypad_currency_modal');
+  };
+
   const handleSelectCurrency = (sym) => {
     triggerHaptic();
     setSelectedCurrency(sym);
     if (onCurrencyChange) onCurrencyChange(sym);
-    setShowCurrencyModal(false);
+    handleCloseCurrencyModal();
   };
 
   const handleDone = () => {
@@ -230,7 +265,6 @@ export default function MobileAmountKeypad({
     if (type === 'income') {
       return CATEGORIES.income;
     }
-    // Expense categories matching Image 2
     return [...MOBILE_KEYPAD_EXPENSE_CATEGORIES, ...customCategories];
   }, [type, customCategories]);
 
@@ -240,7 +274,6 @@ export default function MobileAmountKeypad({
     if (onCategoryChange) {
       onCategoryChange(catId);
     }
-    // Subtle auto-close after selection matching native 1Money experience
     setTimeout(() => {
       if (onClose) onClose();
     }, 180);
@@ -288,132 +321,134 @@ export default function MobileAmountKeypad({
 
   return (
     <>
+      {/* Backdrop: Completely transparent so the form is visible */}
       <div 
         className="mobile-keypad-backdrop" 
         onClick={onClose}
         aria-hidden="true" 
       />
       
+      {/* Gboard-Styled Keypad Bottom Sheet */}
       <div 
-        className="mobile-keypad-sheet"
+        className="mobile-keypad-sheet gboard-sheet"
         role="region"
-        aria-label={currentTab === 'category' ? 'Category Pad' : 'Amount Keypad'}
+        aria-label={currentTab === 'category' ? 'Category Pad' : 'Gboard Amount Keypad'}
       >
-        {/* --- Top Header Bar of Sheet --- */}
-        <div className="mobile-keypad-topbar">
-          <div className="mobile-keypad-title-left">
-            <span className="mobile-keypad-title">
-              {currentTab === 'category' ? 'Category' : 'Amount'}
-            </span>
-            {currentTab === 'amount' && previewResult !== null && (
-              <span className="mobile-keypad-calc-badge" title="Live Calculated Result">
-                = {selectedCurrency} {previewResult}
-              </span>
-            )}
-            {currentTab === 'category' && (
-              <span className={`mobile-pad-type-badge ${type === 'income' ? 'badge-inc' : 'badge-exp'}`}>
-                {type === 'income' ? 'Income' : 'Expense'}
-              </span>
-            )}
-          </div>
-
-          {/* Quick Mode Switcher Tabs: [123 Amount] [🏷️ Category] */}
-          <div className="mobile-keypad-mode-tabs" role="tablist">
+        {/* --- ROW 1: GBOARD AUTOFILL & MODE STRIP --- */}
+        <div className="gboard-autofill-strip">
+          <div className="gboard-autofill-left">
             <button
               type="button"
-              role="tab"
-              aria-selected={currentTab === 'amount'}
-              className={`mobile-keypad-mode-tab ${currentTab === 'amount' ? 'active' : ''}`}
+              className={`gboard-mode-chip ${currentTab === 'amount' ? 'active' : ''}`}
               onClick={() => handleTabSwitch('amount')}
             >
               123 Amount
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={currentTab === 'category'}
-              className={`mobile-keypad-mode-tab ${currentTab === 'category' ? 'active' : ''}`}
+              className={`gboard-mode-chip ${currentTab === 'category' ? 'active' : ''}`}
               onClick={() => handleTabSwitch('category')}
             >
               🏷️ Category
             </button>
-          </div>
-          
-          <div className="mobile-keypad-actions">
-            {currentTab === 'amount' ? (
-              <button 
-                type="button" 
-                className="mobile-keypad-action-btn"
-                onClick={() => setShowCurrencyModal(true)}
-                title="Change Currency"
-                aria-label="Change Currency"
-              >
-                <Globe size={18} />
-              </button>
-            ) : (
-              <button 
-                type="button" 
-                className={`mobile-keypad-action-btn ${isAddingCustomCat ? 'active-pencil' : ''}`}
-                onClick={() => setIsAddingCustomCat(prev => !prev)}
-                title="Add / Edit Category"
-                aria-label="Add or Edit Category"
-              >
-                <Pencil size={18} />
-              </button>
+            {currentTab === 'amount' && previewResult !== null && (
+              <span className="gboard-calc-badge" title="Live Calculated Result">
+                = {selectedCurrency} {previewResult}
+              </span>
             )}
+          </div>
 
-            <button 
-              type="button" 
-              className="mobile-keypad-action-btn"
-              onClick={onClose}
-              title="Close Pad"
-              aria-label="Close Pad"
+          <div className="gboard-autofill-right">
+            <button
+              type="button"
+              className="gboard-curr-badge"
+              onClick={handleOpenCurrencyModal}
+              title="Select Currency"
             >
-              <X size={20} />
+              {selectedCurrency}
             </button>
+            <span className="gboard-autofill-icon" title="Autofill Key">
+              <KeyRound size={15} />
+            </span>
+            <span className="gboard-autofill-icon" title="Cards">
+              <CreditCard size={15} />
+            </span>
+            <span className="gboard-autofill-icon" title="Location">
+              <MapPin size={15} />
+            </span>
           </div>
         </div>
 
-        {/* --- VIEW 1: CATEGORY PAD (Matching Image 2 Reference) --- */}
-        {currentTab === 'category' && (
-          <div className="mobile-category-pad-container">
-            {/* Custom Category Add form when pencil clicked */}
+        {/* --- VIEW 1: CATEGORY PAD --- */}
+        {currentTab === 'category' ? (
+          <div className="gboard-category-container">
+            {/* Category Pad Header */}
+            <div className="gboard-cat-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="gboard-cat-title">Categories</span>
+                <span className={`mobile-pad-type-badge ${type === 'income' ? 'badge-inc' : 'badge-exp'}`}>
+                  {type === 'income' ? 'Income' : 'Expense'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* Type toggle */}
+                <div className="gboard-cat-type-toggle">
+                  <button
+                    type="button"
+                    className={`gboard-cat-type-pill ${type === 'expense' ? 'active' : ''}`}
+                    onClick={() => onTypeChange && onTypeChange('expense')}
+                  >
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    className={`gboard-cat-type-pill ${type === 'income' ? 'active' : ''}`}
+                    onClick={() => onTypeChange && onTypeChange('income')}
+                  >
+                    Income
+                  </button>
+                </div>
+
+                <button 
+                  type="button" 
+                  className={`gboard-icon-btn ${isAddingCustomCat ? 'active' : ''}`}
+                  onClick={() => setIsAddingCustomCat(prev => !prev)}
+                  title="Add Custom Category"
+                >
+                  <Pencil size={16} />
+                </button>
+
+                <button 
+                  type="button" 
+                  className="gboard-icon-btn"
+                  onClick={onClose}
+                  title="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Category Form */}
             {isAddingCustomCat && (
               <form onSubmit={handleAddCustomCategory} className="mobile-custom-cat-form">
                 <input
                   type="text"
                   className="mobile-custom-cat-input"
-                  placeholder="New category name (e.g. Snacks)..."
+                  placeholder="New category name..."
                   value={customCatName}
                   onChange={(e) => setCustomCatName(e.target.value)}
                   autoFocus
                 />
                 <button type="submit" className="mobile-custom-cat-btn">
-                  <Plus size={16} /> Add
+                  <Plus size={15} /> Add
                 </button>
               </form>
             )}
 
-            {/* Sub-bar for switching Expense vs Income categories */}
-            <div className="mobile-catpad-type-bar">
-              <button
-                type="button"
-                className={`mobile-catpad-type-chip ${type === 'expense' ? 'active-exp' : ''}`}
-                onClick={() => onTypeChange && onTypeChange('expense')}
-              >
-                Expense
-              </button>
-              <button
-                type="button"
-                className={`mobile-catpad-type-chip ${type === 'income' ? 'active-inc' : ''}`}
-                onClick={() => onTypeChange && onTypeChange('income')}
-              >
-                Income
-              </button>
-            </div>
-
-            {/* 3-Column Category Grid Matching Image 2 */}
-            <div className="mobile-category-pad-grid">
+            {/* 3-Column Category Grid */}
+            <div className="gboard-category-grid">
               {categoriesToDisplay.map((cat) => {
                 const isSelected = category === cat.id;
                 const catColor = cat.color || '#6366F1';
@@ -421,31 +456,26 @@ export default function MobileAmountKeypad({
                   <button
                     key={cat.id}
                     type="button"
-                    className={`mobile-catpad-cell ${isSelected ? 'selected' : ''}`}
+                    className={`gboard-cat-cell ${isSelected ? 'selected' : ''}`}
                     onClick={() => handleSelectCategory(cat.id)}
                     title={`Select ${cat.name}`}
                     style={isSelected ? {
                       borderColor: catColor,
-                      background: `${catColor}18`,
-                      boxShadow: `0 2px 10px ${catColor}30`,
+                      background: `${catColor}20`,
+                      boxShadow: `0 2px 8px ${catColor}35`,
                     } : {}}
                   >
                     <span 
-                      className="mobile-catpad-icon"
+                      className="gboard-cat-cell-icon"
                       style={{
                         background: `${catColor}18`,
-                        border: `1px solid ${catColor}35`,
-                        borderRadius: '10px',
-                        padding: '4px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        border: `1px solid ${catColor}35`
                       }}
                     >
                       {cat.icon}
                     </span>
                     <span 
-                      className="mobile-catpad-label"
+                      className="gboard-cat-cell-label"
                       style={isSelected ? { color: catColor, fontWeight: 700 } : {}}
                     >
                       {cat.name}
@@ -455,47 +485,93 @@ export default function MobileAmountKeypad({
               })}
             </div>
           </div>
-        )}
-
-        {/* --- VIEW 2: AMOUNT KEYPAD --- */}
-        {currentTab === 'amount' && (
+        ) : (
+          /* --- VIEW 2: GBOARD NUMPAD --- */
           <>
-            {/* Currency Quick-Switcher Strip */}
-            <div className="mobile-keypad-currency-strip">
-              {quickCurrencies.map((curr) => {
-                const isSelected = selectedCurrency === curr.symbol;
-                return (
-                  <button
-                    key={curr.symbol}
-                    type="button"
-                    className={`mobile-keypad-curr-pill ${isSelected ? 'active' : ''}`}
-                    onClick={() => handleSelectCurrency(curr.symbol)}
-                    title={`Use ${curr.name} (${curr.symbol})`}
-                  >
-                    {curr.symbol}
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                className="mobile-keypad-curr-more"
-                onClick={() => setShowCurrencyModal(true)}
-                title="More Currencies"
+            {/* ROW 2: GBOARD ICON TOOLBAR (Matching 2nd Reference Screenshot) */}
+            <div className="gboard-toolbar">
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                onClick={() => handleTabSwitch('category')}
+                title="Category Pad"
               >
-                More...
+                <LayoutGrid size={18} />
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                title="Stickers" 
+                onClick={triggerHaptic}
+              >
+                <Smile size={18} />
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn gboard-gif-btn" 
+                title="GIF" 
+                onClick={triggerHaptic}
+              >
+                <span className="gboard-gif-badge">GIF</span>
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                title="Settings" 
+                onClick={triggerHaptic}
+              >
+                <Settings size={18} />
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                title="Currencies & Languages" 
+                onClick={() => setShowCurrencyModal(true)}
+              >
+                <Languages size={18} />
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                title="Switch Currency ($ / ₹)" 
+                onClick={() => {
+                  const next = selectedCurrency === '₹' ? '$' : '₹';
+                  handleSelectCurrency(next);
+                }}
+              >
+                <Palette size={18} />
+              </button>
+              <button 
+                type="button" 
+                className={`gboard-toolbar-btn ${isCalcExpanded ? 'active-calc' : ''}`}
+                title="Toggle Calculator Bar (+, -, ×, ÷)" 
+                onClick={() => {
+                  triggerHaptic();
+                  setIsCalcExpanded(!isCalcExpanded);
+                }}
+              >
+                <Calculator size={18} />
+              </button>
+              <button 
+                type="button" 
+                className="gboard-toolbar-btn" 
+                title="Microphone" 
+                onClick={triggerHaptic}
+              >
+                <MicOff size={18} />
               </button>
             </div>
 
-            {/* Optional Expanded Calculator Operation Row */}
+            {/* Optional Expandable Arithmetic Operations Bar */}
             {isCalcExpanded && (
-              <div className="mobile-keypad-calc-subbar">
-                <button type="button" className="mobile-keypad-calc-op" onClick={() => handleOperator('+')}>+</button>
-                <button type="button" className="mobile-keypad-calc-op" onClick={() => handleOperator('-')}>−</button>
-                <button type="button" className="mobile-keypad-calc-op" onClick={() => handleOperator('*')}>×</button>
-                <button type="button" className="mobile-keypad-calc-op" onClick={() => handleOperator('/')}>÷</button>
+              <div className="gboard-calc-subbar">
+                <button type="button" className="gboard-calc-op" onClick={() => handleOperator('+')}>+</button>
+                <button type="button" className="gboard-calc-op" onClick={() => handleOperator('-')}>−</button>
+                <button type="button" className="gboard-calc-op" onClick={() => handleOperator('*')}>×</button>
+                <button type="button" className="gboard-calc-op" onClick={() => handleOperator('/')}>÷</button>
                 <button 
                   type="button" 
-                  className="mobile-keypad-calc-op eval" 
+                  className="gboard-calc-op eval" 
                   onClick={() => {
                     const res = safeEvaluate(internalValue);
                     setInternalValue(String(res));
@@ -506,7 +582,7 @@ export default function MobileAmountKeypad({
                 </button>
                 <button 
                   type="button" 
-                  className="mobile-keypad-calc-op clear" 
+                  className="gboard-calc-op clear" 
                   onClick={() => {
                     setInternalValue('');
                     if (onChange) onChange('');
@@ -517,97 +593,144 @@ export default function MobileAmountKeypad({
               </div>
             )}
 
-            {/* 4x4 Numeric Pad Grid */}
-            <div className="mobile-keypad-grid">
-              {/* Row 1: 1, 2, 3, ⌫ */}
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('1')}>1</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('2')}>2</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('3')}>3</button>
+            {/* 4x4 GBOARD PILL NUMPAD GRID (Exact match to 2nd screenshot marked in yellow) */}
+            <div className="gboard-numpad-grid">
+              {/* ROW 1: [ 1 ] [ 2 ] [ 3 ] [ - ] */}
+              <button type="button" className="gboard-key" onClick={() => handleDigit('1')}>
+                1
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('2')}>
+                2
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('3')}>
+                3
+              </button>
               <button 
                 type="button" 
-                className="mobile-keypad-key mobile-keypad-backspace-key"
+                className="gboard-key gboard-op-key" 
+                onClick={() => handleOperator('-')}
+                title="Subtract / Minus"
+                aria-label="Subtract"
+              >
+                −
+              </button>
+
+              {/* ROW 2: [ 4 ] [ 5 ] [ 6 ] [ ␣ (Space / +) ] */}
+              <button type="button" className="gboard-key" onClick={() => handleDigit('4')}>
+                4
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('5')}>
+                5
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('6')}>
+                6
+              </button>
+              <button 
+                type="button" 
+                className="gboard-key gboard-space-key" 
+                onClick={handleSpaceOrPlus}
+                title="Space / Add (+)"
+                aria-label="Space bar"
+              >
+                {/* Authentic Gboard Space Bracket SVG */}
+                <svg width="22" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 10v4h14v-4" />
+                </svg>
+              </button>
+
+              {/* ROW 3: [ 7 ] [ 8 ] [ 9 ] [ ⌫ (Backspace) ] */}
+              <button type="button" className="gboard-key" onClick={() => handleDigit('7')}>
+                7
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('8')}>
+                8
+              </button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('9')}>
+                9
+              </button>
+              <button 
+                type="button" 
+                className="gboard-key gboard-backspace-key" 
                 onClick={handleBackspace}
                 onMouseDown={handleBackspaceStart}
                 onMouseUp={handleBackspaceEnd}
                 onMouseLeave={handleBackspaceEnd}
                 onTouchStart={handleBackspaceStart}
                 onTouchEnd={handleBackspaceEnd}
-                title="Backspace (Hold to clear all)"
+                title="Backspace (Hold to clear)"
                 aria-label="Backspace"
               >
-                <Delete size={22} className="keypad-backspace-icon" />
+                {/* Standard Android Gboard Backspace Tag SVG */}
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                  <line x1="18" y1="9" x2="12" y2="15" />
+                  <line x1="12" y1="9" x2="18" y2="15" />
+                </svg>
               </button>
 
-              {/* Row 2: 4, 5, 6, - */}
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('4')}>4</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('5')}>5</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('6')}>6</button>
+              {/* ROW 4: [ , ] [ 0 ] [ . ] [ ➔| (Teal Action Done) ] */}
               <button 
                 type="button" 
-                className="mobile-keypad-key mobile-keypad-op-key"
-                onClick={() => handleOperator('-')}
-                title="Subtract / Minus"
-                aria-label="Subtract"
+                className="gboard-key gboard-comma-key" 
+                onClick={handleComma}
+                title="Comma"
+                aria-label="Comma"
               >
-                -
+                ,
               </button>
-
-              {/* Row 3: 7, 8, 9, 🖩 */}
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('7')}>7</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('8')}>8</button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('9')}>9</button>
+              <button type="button" className="gboard-key" onClick={() => handleDigit('0')}>
+                0
+              </button>
               <button 
                 type="button" 
-                className={`mobile-keypad-key mobile-keypad-calc-key ${isCalcExpanded ? 'active' : ''}`}
-                onClick={() => setIsCalcExpanded(!isCalcExpanded)}
-                title="Toggle Arithmetic Calculator (+, -, ×, ÷)"
-                aria-label="Calculator"
-              >
-                <Calculator size={20} className="keypad-calc-icon" />
-              </button>
-
-              {/* Row 4: +, 0, ., Done */}
-              <button 
-                type="button" 
-                className="mobile-keypad-key mobile-keypad-op-key"
-                onClick={() => handleOperator('+')}
-                title="Add / Plus"
-                aria-label="Plus"
-              >
-                +
-              </button>
-              <button type="button" className="mobile-keypad-key" onClick={() => handleDigit('0')}>0</button>
-              <button 
-                type="button" 
-                className="mobile-keypad-key mobile-keypad-dot-key" 
+                className="gboard-key gboard-dot-key" 
                 onClick={handleDecimal}
+                title="Decimal Point"
                 aria-label="Decimal"
               >
                 .
               </button>
               <button 
                 type="button" 
-                className="mobile-keypad-key mobile-keypad-done-key"
+                className="gboard-key gboard-action-key" 
                 onClick={handleDone}
+                title="Done"
                 aria-label="Done"
               >
-                Done
+                {/* Gboard Teal Return / Action Arrow pointing right to vertical bar (➔|) */}
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0e322a" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12h12M11 6l6 6-6 6M20 5v14" />
+                </svg>
               </button>
             </div>
           </>
         )}
+
+        {/* --- BOTTOM DISMISS BAR & ANDROID HOME INDICATOR (Matching 2nd Screenshot) --- */}
+        <div className="gboard-bottom-bar">
+          <button 
+            type="button" 
+            className="gboard-dismiss-btn" 
+            onClick={onClose}
+            aria-label="Dismiss keyboard"
+            title="Hide Keyboard"
+          >
+            <ChevronDown size={22} />
+          </button>
+          <div className="gboard-home-bar" />
+        </div>
       </div>
 
-      {/* Currency Selection Dialog (Opened from Globe Icon) */}
+      {/* Currency Selection Dialog (Opened from Globe/Languages Icon) */}
       {showCurrencyModal && (
-        <div className="mobile-curr-picker-overlay" onClick={() => setShowCurrencyModal(false)}>
+        <div className="mobile-curr-picker-overlay" onClick={handleCloseCurrencyModal}>
           <div className="mobile-curr-picker-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-curr-picker-header">
               <h3>Select Currency</h3>
               <button 
                 type="button" 
                 className="mobile-curr-picker-close" 
-                onClick={() => setShowCurrencyModal(false)}
+                onClick={handleCloseCurrencyModal}
               >
                 <X size={18} />
               </button>
