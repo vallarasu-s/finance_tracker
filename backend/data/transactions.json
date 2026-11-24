@@ -1,1 +1,1 @@
-[{"type":"income","amount":123456,"recipient":"","category":"salary","paymentMethod":"bank","date":"2026-10-24","time":"11:10","note":"","id":"tx_1792820427237_57j4i","createdAt":"2026-10-24T05:40:27.237Z","updatedAt":"2026-10-24T05:40:27.237Z"}]
+[{"type":"income","amount":90000,"recipient":"","category":"salary","paymentMethod":"cash","date":"2026-02-21","time":"21:33","note":"","id":"tx_1795277002204_0b6sw","createdAt":"2026-11-21T16:03:22.204Z","updatedAt":"2026-11-21T16:07:47.464Z"}]

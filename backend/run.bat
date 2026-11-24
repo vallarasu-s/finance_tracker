@@ -1,10 +1,15 @@
 @echo off
-echo Compiling and starting Finance Tracker Java Backend...
+cd /d "%~dp0"
+echo ==================================================
+echo Compiling Finance Tracker Java + MongoDB Backend...
+echo ==================================================
 if not exist out mkdir out
-javac -d out src\com\financetracker\FinanceServer.java
+javac -cp "lib/*" -d out src\com\financetracker\*.java src\com\financetracker\app\*.java src\com\financetracker\controller\*.java src\com\financetracker\service\*.java
 if %ERRORLEVEL% equ 0 (
+    echo [OK] Compilation successful!
     echo Starting Java Server on http://localhost:8080...
-    java -cp out com.financetracker.FinanceServer
+    java -cp "lib/*;out" com.financetracker.app.FinanceApp
 ) else (
-    echo Compilation failed!
+    echo [ERROR] Compilation failed!
+    pause
 )

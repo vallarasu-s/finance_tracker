@@ -51,63 +51,59 @@ A personal finance tracker web application with a **React frontend** and a **Jav
 
 ```
 Finance_tracker/
+├── frontend/                            # React 19 + Vite Frontend
+│   ├── src/
+│   │   ├── components/                  # UI components, dashboard, modals, keypads
+│   │   ├── services/                    # storage.js, api.js, confetti.js
+│   │   ├── styles/                      # theme tokens, layout.css, components.css
+│   │   ├── App.jsx                      # Main app coordinator
+│   │   └── main.jsx                     # React entrypoint
+│   ├── public/                          # Favicon, icons, PWA manifest
+│   ├── package.json                     # Frontend npm dependencies (React 19, Lucide, Vite)
+│   ├── vite.config.js                   # Vite configuration with /api proxy to port 8080
+│   └── index.html                       # HTML template
+│
 ├── backend/                             # Java 21 REST API Backend
 │   ├── src/com/financetracker/
 │   │   └── FinanceServer.java           # Java 21 HTTP REST Server with virtual threads
-│   ├── data/                            # Persistent JSON database (transactions, goals)
+│   ├── data/                            # Persistent JSON database (transactions, goals, settings)
 │   ├── out/                             # Compiled Java bytecode (.class)
 │   └── run.bat                          # One-click script to compile and run Java backend
 │
-├── src/                                 # React Frontend (Vite)
-│   ├── components/
-│   │   ├── Navbar.jsx                   # Top header with brand, online status, sync, currency
-│   │   ├── Dashboard.jsx                # High-level KPIs, budget gauge, today's feed
-│   │   ├── DailyTransactions.jsx        # Grouped daily timeline, filters & search
-│   │   ├── FinancialGoals.jsx           # Financial goals grid with circular progress rings
-│   │   ├── Analytics.jsx                # Zero-dependency interactive SVG charts
-│   │   ├── TransactionModal.jsx         # Income & expense logging modal
-│   │   ├── GoalModal.jsx                # Goal creation & edit modal
-│   │   ├── GoalDepositModal.jsx         # Deposit & withdraw modal with confetti trigger
-│   │   ├── DataBackupModal.jsx          # JSON/CSV export, import, and demo data loader
-│   │   └── ToastContainer.jsx           # Floating status toasts
-│   ├── services/
-│   │   ├── storage.js                   # LocalStorage & IndexedDB offline engine
-│   │   ├── api.js                       # Java backend REST client
-│   │   └── confetti.js                  # Canvas particle physics engine
-│   ├── styles/
-│   │   ├── variables.css                # Dark/light theme design tokens & colors
-│   │   ├── base.css                     # Reset, typography, custom scrollbars
-│   │   ├── components.css               # Card surfaces, buttons, progress rings, modals
-│   │   └── layout.css                   # Grid layouts, responsive banners & timeline
-│   ├── App.jsx                          # Main app coordinator
-│   └── main.jsx                         # React 19 entrypoint
-│
-├── public/
-│   ├── favicon.svg                      # Custom vector icon
-│   └── manifest.json                    # PWA installation manifest
-├── package.json                         # npm scripts and dependencies
-└── vite.config.js                       # Vite configuration with /api backend proxy
+├── start-all.bat                        # One-click launcher to start BOTH frontend & backend
+├── start-frontend.bat                   # One-click launcher for frontend on http://localhost:3000
+├── start-backend.bat                    # One-click launcher for backend on http://localhost:8080
+└── package.json                         # Root package with unified dev, build, and backend scripts
 ```
 
 ---
 
 ## How to Run
 
-### 1. Start the React Frontend
+### Option A: One-Click Startup (Windows)
+Double-click any of the launcher files in the root folder:
+- **`start-all.bat`**: Starts both the Java backend (port 8080) and React frontend (port 3000) simultaneously in separate command windows.
+- **`start-frontend.bat`**: Starts only the React frontend on `http://localhost:3000`.
+- **`start-backend.bat`**: Compiles and runs only the Java backend on `http://localhost:8080`.
+
+### Option B: Command Line (npm)
+From the root folder:
 ```bash
+# Start frontend
+npm run dev
+
+# Start backend
+npm run backend
+
+# Build frontend for production
+npm run build
+```
+
+Or from inside the `frontend/` directory:
+```bash
+cd frontend
 npm run dev
 ```
-Open **http://localhost:3000** in your web browser.
-
-### 2. Start the Java Backend
-```bash
-npm run backend
-```
-Or directly on Windows:
-```cmd
-backend\run.bat
-```
-The Java backend starts on **http://localhost:8080** and handles `/api/health`, `/api/transactions`, `/api/goals`, and `/api/sync`.
 
 ### 3. Running 100% Offline
 Even if the Java backend is not running or there is no internet connection, the app runs offline:
