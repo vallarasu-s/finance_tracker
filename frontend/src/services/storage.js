@@ -577,78 +577,104 @@ export function exportGoalHistoryAsCSV(goal, symbol = '$') {
 // =============================================================================
 
 export const INVESTMENT_CATEGORIES = [
-  { id: 'stocks', name: 'Stocks & Equities', icon: '📈', color: '#3B82F6', desc: 'Direct equities & broad market index ETFs' },
-  { id: 'mutual_funds', name: 'Mutual Funds & SIP', icon: '🏦', color: '#10B981', desc: 'Systematic mutual funds & index trackers' },
+  { id: 'mutual_funds', name: 'Mutual Funds (SIP)', icon: '🏦', color: '#10B981', desc: 'Direct & regular mutual funds with automatic SIP tracking' },
+  { id: 'stocks', name: 'Stocks & ETFs', icon: '📈', color: '#3B82F6', desc: 'NSE/BSE equities, bluechip shares & index ETFs' },
+  { id: 'fixed_deposits', name: 'Fixed Deposits (FD)', icon: '🏛️', color: '#06B6D4', desc: 'Bank, corporate & post office fixed/recurring deposits' },
+  { id: 'govt_schemes', name: 'PPF & Govt Schemes', icon: '📜', color: '#8B5CF6', desc: 'Public Provident Fund, EPF, NPS & Sovereign small savings' },
+  { id: 'gold', name: 'SGB & Gold Bullion', icon: '🥇', color: '#EAB308', desc: 'Sovereign Gold Bonds (2.5%), physical & digital gold' },
   { id: 'crypto', name: 'Crypto & Digital Assets', icon: '🪙', color: '#F59E0B', desc: 'Decentralized digital stores of value' },
-  { id: 'gold', name: 'Precious Metals / Gold', icon: '🥇', color: '#EAB308', desc: 'Sovereign gold bonds & bullion ETFs' },
-  { id: 'real_estate', name: 'Real Estate & REITs', icon: '🏠', color: '#8B5CF6', desc: 'Commercial property trusts & REIT yields' },
-  { id: 'bonds', name: 'Bonds & Fixed Deposits', icon: '📜', color: '#06B6D4', desc: 'Guaranteed government bonds & fixed deposits' },
+  { id: 'real_estate', name: 'Real Estate & REITs', icon: '🏠', color: '#EC4899', desc: 'Commercial property trusts & REIT yields' },
 ];
 
 export const DEFAULT_INVESTMENTS = [
   {
     id: 'inv_1',
-    name: 'Vanguard S&P 500 ETF',
-    symbol: 'VOO',
-    category: 'stocks',
-    units: 15,
-    buyPrice: 420.50,
-    currentPrice: 512.80,
-    date: '2025-01-15',
-    dividendYield: 1.45,
-    notes: 'Core US Broad Market Index ETF for compounding wealth'
+    name: 'Parag Parikh Flexi Cap Fund - Direct Growth',
+    symbol: 'PPFC-DIR',
+    category: 'mutual_funds',
+    units: 250,
+    buyPrice: 62.40,
+    currentPrice: 84.80,
+    date: '2024-03-15',
+    dividendYield: 0,
+    investmentMode: 'Monthly SIP',
+    notes: 'Long-term equity compounding via monthly SIP'
   },
   {
     id: 'inv_2',
-    name: 'Apple Inc.',
-    symbol: 'AAPL',
+    name: 'HDFC Bank Ltd',
+    symbol: 'HDFCBANK.NS',
     category: 'stocks',
-    units: 25,
-    buyPrice: 175.00,
-    currentPrice: 228.40,
-    date: '2025-02-10',
-    dividendYield: 0.55,
-    notes: 'Tech ecosystem leader with strong free cash flow'
+    units: 50,
+    buyPrice: 1480.00,
+    currentPrice: 1740.00,
+    date: '2024-05-10',
+    dividendYield: 1.15,
+    investmentMode: 'Lumpsum',
+    notes: 'Private banking sector leader holding'
   },
   {
     id: 'inv_3',
-    name: 'Nifty 50 Bluechip Index',
-    symbol: 'NIFTY50',
-    category: 'mutual_funds',
-    units: 80,
-    buyPrice: 215.00,
-    currentPrice: 248.50,
-    date: '2025-03-01',
-    dividendYield: 1.20,
-    notes: 'Monthly SIP into top 50 Indian enterprises'
+    name: 'SBI 1-Year Term Deposit (FD)',
+    symbol: 'SBI-FD',
+    category: 'fixed_deposits',
+    units: 1,
+    buyPrice: 100000.00,
+    currentPrice: 107100.00,
+    date: '2024-01-01',
+    dividendYield: 7.10,
+    interestRate: 7.10,
+    investmentMode: 'Fixed Term',
+    notes: 'Guaranteed 7.10% p.a. bank fixed deposit'
   },
   {
     id: 'inv_4',
-    name: 'Bitcoin Digital Asset',
-    symbol: 'BTC',
-    category: 'crypto',
-    units: 0.18,
-    buyPrice: 58000.00,
-    currentPrice: 89500.00,
-    date: '2024-11-20',
-    dividendYield: 0,
-    notes: 'Digital store of value and macro inflation hedge'
+    name: 'Public Provident Fund (PPF)',
+    symbol: 'PPF-GOVT',
+    category: 'govt_schemes',
+    units: 1,
+    buyPrice: 150000.00,
+    currentPrice: 160650.00,
+    date: '2024-04-01',
+    dividendYield: 7.10,
+    interestRate: 7.10,
+    investmentMode: 'Govt Scheme',
+    notes: '15-year tax-free sovereign compounding'
   },
   {
     id: 'inv_5',
-    name: 'Sovereign Physical Gold ETF',
-    symbol: 'GOLD',
+    name: 'Sovereign Gold Bond 2023-24 Series III',
+    symbol: 'SGB2023',
     category: 'gold',
-    units: 40,
-    buyPrice: 65.00,
-    currentPrice: 78.20,
-    date: '2024-09-12',
+    units: 15,
+    buyPrice: 6199.00,
+    currentPrice: 7850.00,
+    date: '2023-12-18',
     dividendYield: 2.50,
-    notes: 'Defensive safe-haven gold allocation'
+    interestRate: 2.50,
+    investmentMode: 'SGB',
+    notes: '2.5% p.a. semi-annual payout + gold capital gains'
+  },
+  {
+    id: 'inv_6',
+    name: 'Tata Consultancy Services (TCS)',
+    symbol: 'TCS.NS',
+    category: 'stocks',
+    units: 20,
+    buyPrice: 3850.00,
+    currentPrice: 4220.00,
+    date: '2024-06-20',
+    dividendYield: 1.35,
+    investmentMode: 'Lumpsum',
+    notes: 'IT export titan with high dividend yield'
   }
 ];
 
 export function getInvestmentCategoryInfo(catId) {
+  const normalized = String(catId || '').toLowerCase().trim();
+  if (normalized === 'bonds') return INVESTMENT_CATEGORIES.find(c => c.id === 'fixed_deposits') || INVESTMENT_CATEGORIES[2];
+  if (normalized === 'sgb' || normalized === 'sgb_gold') return INVESTMENT_CATEGORIES.find(c => c.id === 'gold') || INVESTMENT_CATEGORIES[4];
+  if (normalized === 'ppf' || normalized === 'nps') return INVESTMENT_CATEGORIES.find(c => c.id === 'govt_schemes') || INVESTMENT_CATEGORIES[3];
   return INVESTMENT_CATEGORIES.find(c => c.id === catId) || INVESTMENT_CATEGORIES[0];
 }
 

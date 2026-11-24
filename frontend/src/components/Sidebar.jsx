@@ -163,7 +163,7 @@ export default function Sidebar({
                 onClick={() => handleSelectTab('investing')}
               >
                 <TrendingUp size={18} className="sidebar-item-icon" />
-                <span className="sidebar-item-label">Investment Portfolio</span>
+                <span className="sidebar-item-label">Investing Tracker</span>
                 {investmentCount > 0 && (
                   <span className="sidebar-badge-pill neutral">{investmentCount}</span>
                 )}

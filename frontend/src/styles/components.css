@@ -26,6 +26,7 @@
 .card-interactive {
   cursor: pointer;
 }
+
 .card-interactive:hover {
   transform: translateY(-2px);
   border-color: rgba(99, 102, 241, 0.3);
@@ -71,14 +72,17 @@
   background: var(--color-brand-glow);
   color: var(--color-brand);
 }
+
 .stat-icon-wrapper.income {
   background: var(--color-income-bg);
   color: var(--color-income);
 }
+
 .stat-icon-wrapper.expense {
   background: var(--color-expense-bg);
   color: var(--color-expense);
 }
+
 .stat-icon-wrapper.goal {
   background: var(--color-goal-bg);
   color: var(--color-goal);
@@ -116,21 +120,25 @@
   color: var(--color-income);
   border: 1px solid rgba(16, 185, 129, 0.2);
 }
+
 .badge-expense {
   background: var(--color-expense-bg);
   color: var(--color-expense);
   border: 1px solid rgba(244, 63, 94, 0.2);
 }
+
 .badge-goal {
   background: var(--color-goal-bg);
   color: var(--color-goal);
   border: 1px solid rgba(6, 182, 212, 0.2);
 }
+
 .badge-warning {
   background: var(--color-warning-bg);
   color: var(--color-warning);
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
+
 .badge-neutral {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
@@ -161,6 +169,7 @@
   color: #ffffff;
   box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.35);
 }
+
 .btn-primary:hover {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.45);
@@ -172,6 +181,7 @@
   color: #ffffff;
   box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.35);
 }
+
 .btn-income:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.5);
@@ -182,6 +192,7 @@
   color: #ffffff;
   box-shadow: 0 4px 14px 0 rgba(244, 63, 94, 0.35);
 }
+
 .btn-expense:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px 0 rgba(244, 63, 94, 0.5);
@@ -192,6 +203,7 @@
   color: var(--text-primary);
   border: 1px solid var(--border-medium);
 }
+
 .btn-secondary:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-focus);
@@ -202,6 +214,7 @@
   padding: 0.5rem;
   border-radius: var(--radius-sm);
 }
+
 .btn-ghost:hover {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.05);
@@ -230,7 +243,9 @@
   color: var(--text-secondary);
 }
 
-.form-input, .form-select, .form-textarea {
+.form-input,
+.form-select,
+.form-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
   background: var(--bg-glass-input);
@@ -241,13 +256,16 @@
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
   outline: none;
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px var(--color-brand-glow);
 }
 
-.form-input::placeholder, .form-textarea::placeholder {
+.form-input::placeholder,
+.form-textarea::placeholder {
   color: var(--text-muted);
 }
 
@@ -287,6 +305,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @media (max-width: 768px) {
+
   .form-input[type="date"]::-webkit-calendar-picker-indicator,
   .form-input[type="time"]::-webkit-calendar-picker-indicator,
   input[type="date"]::-webkit-calendar-picker-indicator,
@@ -331,6 +350,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(244, 63, 94, 0.4);
 }
+
 .segment-btn.active-income {
   background: var(--color-income);
   color: #ffffff;
@@ -514,13 +534,25 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalSlideUp {
-  from { transform: translateY(20px) scale(0.97); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+  from {
+    transform: translateY(20px) scale(0.97);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 /* ====================================================================
@@ -996,11 +1028,13 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 0.3rem !important;
   }
+
   .add-tx-pm-chip {
     padding: 0.45rem 0.2rem !important;
     flex-direction: column !important;
     gap: 0.2rem !important;
   }
+
   .add-tx-pm-name {
     font-size: 0.68rem !important;
     white-space: nowrap !important;
@@ -1037,6 +1071,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 [data-theme="dark"] .add-tx-cancel-btn {
   color: #94a3b8;
 }
+
 [data-theme="dark"] .add-tx-cancel-btn:hover {
   color: #f8fafc;
   background: rgba(255, 255, 255, 0.05);
@@ -1490,6 +1525,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @media (max-width: 520px) {
+
   /* Mobile Backdrop */
   .tx-date-picker-backdrop {
     display: block;
@@ -1589,22 +1625,27 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     grid-template-columns: 1.25fr 1fr !important;
     gap: 0.4rem !important;
   }
+
   .add-tx-date-trigger-btn {
     padding: 0.55rem 0.35rem !important;
   }
+
   .tx-date-segments {
     gap: 2px !important;
     font-size: 0.78rem !important;
   }
+
   .tx-date-segment-month {
     padding: 1px 4px !important;
     font-size: 0.75rem !important;
   }
+
   .add-tx-time-input {
     padding: 0.55rem 0.35rem !important;
     font-size: 0.8rem !important;
   }
 }
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;
@@ -1637,16 +1678,25 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 .toast-success {
   border-left: 4px solid var(--color-income);
 }
+
 .toast-error {
   border-left: 4px solid var(--color-expense);
 }
+
 .toast-info {
   border-left: 4px solid var(--color-brand);
 }
 
 @keyframes toastSlideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Confetti Canvas */
@@ -1758,6 +1808,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     opacity: 0;
     transform: translateY(16px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2113,8 +2164,15 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @keyframes dropdownFadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .user-dropdown-header {
@@ -2278,6 +2336,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     align-items: flex-start;
     gap: 0.75rem;
   }
+
   .user-profile-name {
     display: none;
   }
@@ -2314,6 +2373,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
   from {
     transform: translateX(-100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -3305,8 +3365,17 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
 }
 
 .settings-sync-now-btn {
@@ -3324,8 +3393,13 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .settings-sync-note {
@@ -3405,14 +3479,17 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 }
 
 @media (max-width: 580px) {
+
   .settings-theme-toggle-group,
   .settings-data-actions {
     grid-template-columns: 1fr;
   }
+
   .settings-account-card {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .settings-logout-btn {
     align-self: flex-end;
   }
@@ -3420,6 +3497,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 
 /* Global Mobile Media Queries for Components & Modals */
 @media (max-width: 640px) {
+
   .modal-overlay,
   .modal-backdrop {
     padding: 0.5rem;
@@ -4562,9 +4640,9 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 .goal-card-clickable {
   cursor: pointer;
   user-select: none;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
-              border-color 0.2s ease, 
-              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .goal-card-clickable:hover {
@@ -4910,6 +4988,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     opacity: 0;
     transform: scale(0.96) translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -5302,6 +5381,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
     transform: translateY(100%);
     opacity: 0.7;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -6428,19 +6508,98 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 
 .add-tx-input-currency-tag {
   position: absolute;
-  left: 14px;
-  font-size: 1.15rem;
-  font-weight: 700;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text-secondary);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-family: var(--font-main, system-ui, -apple-system, sans-serif);
+  transition: color var(--transition-fast);
+}
+
+.add-tx-input-prefix-wrapper:focus-within .add-tx-input-currency-tag {
+  color: var(--color-brand, #2f65f6);
+}
+
+[data-theme="dark"] .add-tx-input-currency-tag {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .add-tx-input-prefix-wrapper:focus-within .add-tx-input-currency-tag {
+  color: #34d399;
+}
+
+.add-tx-input-suffix-tag {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 3;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-family: var(--font-main, system-ui, -apple-system, sans-serif);
+  transition: color var(--transition-fast);
+}
+
+.add-tx-input-prefix-wrapper:focus-within .add-tx-input-suffix-tag {
+  color: var(--color-brand, #2f65f6);
+}
+
+[data-theme="dark"] .add-tx-input-suffix-tag {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .add-tx-input-prefix-wrapper:focus-within .add-tx-input-suffix-tag {
+  color: #34d399;
+}
+
+.add-tx-input.with-suffix,
+.with-suffix {
+  padding-right: 2.2rem !important;
+}
+
+.add-tx-input.with-suffix::-webkit-outer-spin-button,
+.add-tx-input.with-suffix::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.add-tx-input.with-suffix {
+  -moz-appearance: textfield;
+}
+
+/* Any input inside with-prefix wrapper must have sufficient left padding so text never overlaps */
+.add-tx-input.with-prefix,
+.with-prefix {
+  padding-left: 2.2rem !important;
 }
 
 .add-tx-amount-input.with-prefix {
-  padding-left: 2.3rem !important;
+  padding-left: 2.4rem !important;
   font-size: 1.25rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.01em;
+}
+
+.add-tx-amount-group .add-tx-input-currency-tag {
+  font-size: 1.2rem;
+  font-weight: 700;
+  left: 14px;
 }
 
 .shortform-preview-bar {
@@ -6898,6 +7057,318 @@ input[type="time"]::-webkit-calendar-picker-indicator,
   flex-shrink: 0;
 }
 
+.investing-banner-add-btn,
+.fogo-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.45rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.investing-banner-add-btn:hover,
+.fogo-btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.52);
+  transform: translateY(-2px);
+  color: #ffffff !important;
+}
+
+.investing-banner-add-btn:active,
+.fogo-btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.investing-banner-add-btn svg,
+.fogo-btn-primary svg {
+  flex-shrink: 0;
+  stroke: #ffffff;
+}
+
+/* Signature My Portfolio (Tracker) Hero Summary Card */
+.my-portfolio-hero-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme='dark'] .my-portfolio-hero-card {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.my-portfolio-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.my-portfolio-profile-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.my-portfolio-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.my-portfolio-dot.green {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.my-portfolio-live-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.my-portfolio-count-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-app);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+}
+
+.my-portfolio-hero-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.my-portfolio-val-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.my-portfolio-hero-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.my-portfolio-hero-value {
+  font-size: 2.35rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: var(--font-mono);
+  margin: 0;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+  .my-portfolio-hero-value {
+    font-size: 1.85rem;
+  }
+}
+
+.my-portfolio-return-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.my-portfolio-return-badge.profit {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.my-portfolio-return-badge.loss {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.my-portfolio-return-badge .return-percent {
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+/* 4-Item Executive Metric Strip */
+.my-portfolio-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+@media (max-width: 850px) {
+  .my-portfolio-metric-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-portfolio-metric-strip {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+}
+
+.metric-strip-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-app);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.strip-item-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.strip-item-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.strip-item-sub {
+  font-size: 0.82rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* Meta rows and mode tags on holding cards */
+.holding-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+  flex-wrap: wrap;
+}
+
+.holding-mode-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* Quick Add Modal & Presets */
+.investing-quick-add-card {
+  max-width: 440px !important;
+}
+
+.quick-add-existing-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-app);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.quick-info-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.quick-info-pill strong {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.quick-add-calc-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(37, 99, 235, 0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  font-size: 0.88rem;
+}
+
+.quick-add-calc-preview strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #2563eb;
+  font-family: var(--font-mono);
+}
+
+[data-theme='dark'] .quick-add-calc-preview strong {
+  color: #60a5fa;
+}
+
+.presets-group {
+  margin-bottom: 0.85rem;
+}
+
+.preset-select {
+  font-weight: 600;
+  background: var(--bg-app);
+  border-color: var(--color-brand);
+}
+
 /* Allocation Card */
 .investing-allocation-card {
   display: flex;
@@ -7165,8 +7636,13 @@ input[type="time"]::-webkit-calendar-picker-indicator,
   border-radius: 50%;
 }
 
-.sip-dot.blue { background: #3b82f6; }
-.sip-dot.green { background: #10b981; }
+.sip-dot.blue {
+  background: #3b82f6;
+}
+
+.sip-dot.green {
+  background: #10b981;
+}
 
 .sip-row-value {
   font-family: var(--font-mono);
@@ -7580,6 +8056,123 @@ input[type="time"]::-webkit-calendar-picker-indicator,
   font-family: var(--font-mono);
 }
 
+/* ====================================================================
+   ADD INVESTMENT MODAL (Matching Add Transaction / New Entry Design)
+   ==================================================================== */
+.add-inv-modal-dialog {
+  max-width: 480px;
+  max-height: calc(100vh - 2.5rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: auto;
+}
 
+.add-inv-modal-dialog .add-tx-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding: 0.6rem 1.4rem 1.4rem 1.4rem;
+  scrollbar-width: thin;
+}
 
+.add-inv-modal-dialog .add-tx-body::-webkit-scrollbar {
+  width: 5px;
+}
 
+.add-inv-modal-dialog .add-tx-body::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+/* Category Pill Selector in Add Investment Modal */
+.add-inv-type-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.25rem 0;
+}
+
+.add-inv-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.68rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface, #ffffff);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  font-family: inherit;
+}
+
+.add-inv-type-pill:hover {
+  border-color: var(--color-brand);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  transform: translateY(-1px);
+}
+
+.add-inv-type-pill.active {
+  font-weight: 700;
+}
+
+[data-theme="dark"] .add-inv-type-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .add-inv-type-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+/* Live Valuation / Conversion Preview in Add Investment Modal */
+.add-inv-preview-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  text-align: center;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.add-inv-preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.add-inv-preview-label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.add-inv-preview-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+[data-theme="dark"] .add-inv-preview-bar {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(52, 211, 153, 0.2);
+}
+
+@media (max-width: 640px) {
+  .add-inv-modal-dialog {
+    max-width: calc(100% - 1.25rem);
+    margin: auto;
+  }
+}

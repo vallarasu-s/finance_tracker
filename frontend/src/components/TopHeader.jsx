@@ -66,7 +66,7 @@ export default function TopHeader({
       case 'goals':
         return 'Financial Goals & Services';
       case 'investing':
-        return 'Investment & Wealth Portfolio';
+        return 'Investing Tracker';
       case 'help':
         return 'Help Center & Documentation';
       default:

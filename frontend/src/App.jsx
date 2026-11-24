@@ -19,20 +19,20 @@ import HelpModal from './components/HelpModal';
 import GoalDetailModal from './components/GoalDetailModal';
 import ConfirmModal from './components/ConfirmModal';
 
-import { 
-  getTransactions, 
-  saveTransaction, 
-  deleteTransaction, 
-  getGoals, 
-  saveGoal, 
-  deleteGoal, 
-  updateGoalAmount, 
+import {
+  getTransactions,
+  saveTransaction,
+  deleteTransaction,
+  getGoals,
+  saveGoal,
+  deleteGoal,
+  updateGoalAmount,
   deleteGoalTransaction,
   getInvestments,
   saveInvestment,
   deleteInvestment,
   saveInvestments,
-  getSettings, 
+  getSettings,
   saveSettings,
   resetAllData,
   getCurrentUser,
@@ -49,8 +49,8 @@ import {
   CURRENCIES
 } from './services/storage';
 
-import { 
-  checkBackendHealth, 
+import {
+  checkBackendHealth,
   syncWithJavaBackend,
   fetchAllCloudData,
   saveTransactionsToCloud,
@@ -63,11 +63,11 @@ import {
   saveSettingsToCloud
 } from './services/api';
 import { triggerConfetti } from './services/confetti';
-import { 
-  initNavigation, 
-  pushTabNavigation, 
-  pushModalNavigation, 
-  popModalNavigation 
+import {
+  initNavigation,
+  pushTabNavigation,
+  pushModalNavigation,
+  popModalNavigation
 } from './services/navigation';
 
 import { Plus, LayoutDashboard, CreditCard, BarChart2, Target, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -131,6 +131,7 @@ export default function App() {
   const [goalModalState, setGoalModalState] = useState({ isOpen: false, editing: null });
   const [depositModalState, setDepositModalState] = useState({ isOpen: false, goal: null });
   const [goalDetailModalState, setGoalDetailModalState] = useState({ isOpen: false, goal: null });
+  const [isInvestingAddOpen, setIsInvestingAddOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [helpInitialTab, setHelpInitialTab] = useState('getting-started');
@@ -549,23 +550,23 @@ export default function App() {
         hasLoadedCloudRef.current = true;
         if (Array.isArray(data.transactions) && data.transactions.length > 0) {
           setTransactions(data.transactions);
-          try { localStorage.setItem('zt_finance_transactions_v1', JSON.stringify(data.transactions)); } catch {}
+          try { localStorage.setItem('zt_finance_transactions_v1', JSON.stringify(data.transactions)); } catch { }
         }
         if (Array.isArray(data.goals) && data.goals.length > 0) {
           setGoals(data.goals);
-          try { localStorage.setItem('zt_finance_goals_v1', JSON.stringify(data.goals)); } catch {}
+          try { localStorage.setItem('zt_finance_goals_v1', JSON.stringify(data.goals)); } catch { }
         }
         if (Array.isArray(data.investments) && data.investments.length > 0) {
           setInvestments(data.investments);
-          try { localStorage.setItem('zt_finance_investments_v1', JSON.stringify(data.investments)); } catch {}
+          try { localStorage.setItem('zt_finance_investments_v1', JSON.stringify(data.investments)); } catch { }
         }
         if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
           setSettings(prev => ({ ...prev, ...data.settings }));
-          try { localStorage.setItem('zt_finance_settings_v1', JSON.stringify(data.settings)); } catch {}
+          try { localStorage.setItem('zt_finance_settings_v1', JSON.stringify(data.settings)); } catch { }
         }
         if (data.user && typeof data.user === 'object' && (data.user.name || data.user.email)) {
           setCurrentUser(data.user);
-          try { localStorage.setItem('ft_current_user_v1', JSON.stringify(data.user)); } catch {}
+          try { localStorage.setItem('ft_current_user_v1', JSON.stringify(data.user)); } catch { }
         }
         if (data.cloudSynced) {
           showToast('☁️ Synchronized latest data with MongoDB Atlas & Java Backend', 'success');
@@ -636,23 +637,23 @@ export default function App() {
         // Update frontend state with authoritative records returned from cloud
         if (Array.isArray(res.transactions)) {
           setTransactions(res.transactions);
-          try { localStorage.setItem('zt_finance_transactions_v1', JSON.stringify(res.transactions)); } catch {}
+          try { localStorage.setItem('zt_finance_transactions_v1', JSON.stringify(res.transactions)); } catch { }
         }
         if (Array.isArray(res.goals)) {
           setGoals(res.goals);
-          try { localStorage.setItem('zt_finance_goals_v1', JSON.stringify(res.goals)); } catch {}
+          try { localStorage.setItem('zt_finance_goals_v1', JSON.stringify(res.goals)); } catch { }
         }
         if (Array.isArray(res.investments)) {
           setInvestments(res.investments);
-          try { localStorage.setItem('zt_finance_investments_v1', JSON.stringify(res.investments)); } catch {}
+          try { localStorage.setItem('zt_finance_investments_v1', JSON.stringify(res.investments)); } catch { }
         }
         if (res.settings && typeof res.settings === 'object' && Object.keys(res.settings).length > 0) {
           setSettings(prev => ({ ...prev, ...res.settings }));
-          try { localStorage.setItem('zt_finance_settings_v1', JSON.stringify(res.settings)); } catch {}
+          try { localStorage.setItem('zt_finance_settings_v1', JSON.stringify(res.settings)); } catch { }
         }
         if (res.user && typeof res.user === 'object' && Object.keys(res.user).length > 0) {
           setCurrentUser(res.user);
-          try { localStorage.setItem('ft_current_user_v1', JSON.stringify(res.user)); } catch {}
+          try { localStorage.setItem('ft_current_user_v1', JSON.stringify(res.user)); } catch { }
         }
 
         if (res.cloudSynced) {
@@ -976,7 +977,11 @@ export default function App() {
 
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
-        openTxModal('expense', null);
+        if (activeTab === 'investing') {
+          setIsInvestingAddOpen(true);
+        } else {
+          openTxModal('expense', null);
+        }
       } else if (e.key === 'g' || e.key === 'G') {
         e.preventDefault();
         openGoalModal(null);
@@ -990,21 +995,22 @@ export default function App() {
         closeBackupModal();
         closeHelpModal();
         closeConfirmModal();
+        setIsInvestingAddOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [openTxModal, openGoalModal, closeTxModal, closeGoalModal, closeDepositModal, closeBackupModal, closeHelpModal, closeConfirmModal]);
+  }, [activeTab, openTxModal, openGoalModal, closeTxModal, closeGoalModal, closeDepositModal, closeBackupModal, closeHelpModal, closeConfirmModal]);
 
   // If user is not logged in, show the Login Form
   if (!currentUser) {
     return (
       <div className="app-container">
-        <LoginForm 
-          onLogin={handleLogin} 
-          settings={settings} 
-          onUpdateSettings={handleUpdateSettings} 
+        <LoginForm
+          onLogin={handleLogin}
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
         />
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </div>
@@ -1041,7 +1047,7 @@ export default function App() {
     },
     {
       id: 'investing',
-      label: 'Investment & Wealth Portfolio',
+      label: 'Investing Tracker',
       shortLabel: 'Investing',
       icon: <TrendingUp size={16} />,
       badge: investments.length > 0 ? investments.length : null
@@ -1261,6 +1267,8 @@ export default function App() {
                 onAddInvestment={handleAddInvestment}
                 onUpdateInvestment={handleUpdateInvestment}
                 onDeleteInvestment={handleDeleteInvestment}
+                isExternalAddOpen={isInvestingAddOpen}
+                onCloseExternalAdd={() => setIsInvestingAddOpen(false)}
               />
             )}
           </div>
@@ -1338,15 +1346,23 @@ export default function App() {
       />
 
       {/* Floating Action Button at Left Side Bottom ("new entry button are lift side bottom") */}
-      <button 
+      <button
         type="button"
         className="floating-new-entry-btn left-bottom"
-        onClick={() => openTxModal('expense', null)}
-        title="Add New Daily Transaction (Key: N)"
-        aria-label="Add New Transaction"
+        onClick={() => {
+          if (activeTab === 'investing') {
+            setIsInvestingAddOpen(true);
+          } else {
+            openTxModal('expense', null);
+          }
+        }}
+        title={activeTab === 'investing' ? "Add New Investment (Key: N)" : "Add New Daily Transaction (Key: N)"}
+        aria-label={activeTab === 'investing' ? "Add New Investment" : "Add New Transaction"}
       >
         <Plus size={20} className="floating-btn-icon" />
-        <span className="floating-btn-text">New Entry</span>
+        <span className="floating-btn-text">
+          {activeTab === 'investing' ? 'Add Investment' : 'New Entry'}
+        </span>
       </button>
 
       {/* Confirmation Modal */}

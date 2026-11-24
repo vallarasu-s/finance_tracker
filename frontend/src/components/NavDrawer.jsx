@@ -72,8 +72,8 @@ export default function NavDrawer({
     },
     {
       id: 'investing',
-      label: 'Investment Portfolio',
-      desc: 'Stocks, SIP, crypto & wealth allocation',
+      label: 'Investing Tracker',
+      desc: 'Mutual funds, stocks, SIPs, SGB & fixed deposits',
       icon: <TrendingUp size={22} />,
       badge: investmentCount > 0 ? `${investmentCount}` : null,
       accentColor: 'var(--color-brand)'

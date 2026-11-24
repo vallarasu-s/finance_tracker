@@ -3311,6 +3311,10 @@ body:has(.daily-chart-rotated-fullscreen) .floating-new-entry-btn,
 .fogo-tab-panel {
   width: 100%;
   touch-action: pan-y;
+}
+
+.fogo-tab-panel.slide-forward,
+.fogo-tab-panel.slide-backward {
   will-change: transform, opacity;
 }
 
