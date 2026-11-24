@@ -23,7 +23,8 @@ import {
   ShieldCheck,
   Calendar,
   Zap,
-  Repeat
+  Repeat,
+  Eye
 } from 'lucide-react';
 import {
   INVESTMENT_CATEGORIES,
@@ -319,6 +320,9 @@ export default function InvestingDashboard({
   // Quick SIP / Buy Installment Modal State
   const [quickAddModal, setQuickAddModal] = useState({ isOpen: false, investment: null, addedUnits: '10', addedNav: '' });
 
+  // Detailed View Modal State
+  const [detailsModalInv, setDetailsModalInv] = useState(null);
+
   // Form State
   const [formName, setFormName] = useState('');
   const [formSymbol, setFormSymbol] = useState('');
@@ -406,14 +410,14 @@ export default function InvestingDashboard({
 
   // Lock body scroll when modal is open to match TransactionModal (New Entry) scroll behavior
   useEffect(() => {
-    if (isModalOpen || quickAddModal.isOpen) {
+    if (isModalOpen || quickAddModal.isOpen || detailsModalInv) {
       const origOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       return () => {
         document.body.style.overflow = origOverflow;
       };
     }
-  }, [isModalOpen, quickAddModal.isOpen]);
+  }, [isModalOpen, quickAddModal.isOpen, detailsModalInv]);
 
   // Open modal for Edit
   const handleOpenEdit = (inv) => {
@@ -1052,6 +1056,17 @@ export default function InvestingDashboard({
               const roiPercent = invested > 0 ? (profit / invested) * 100 : 0;
               const isProfit = profit >= 0;
 
+              // Annual Return rate: user configured rate (dividendYield / interestRate) or auto ROI %
+              const hasExplicitRate = (inv.dividendYield !== undefined && inv.dividendYield !== null && inv.dividendYield !== '') ||
+                                      (inv.interestRate !== undefined && inv.interestRate !== null && inv.interestRate !== '');
+              const explicitRate = hasExplicitRate ? Number(inv.dividendYield !== undefined && inv.dividendYield !== null && inv.dividendYield !== '' ? inv.dividendYield : inv.interestRate) : NaN;
+              const annualReturnPercent = (!isNaN(explicitRate) && explicitRate !== 0) ? explicitRate : roiPercent;
+              const isRatePositive = annualReturnPercent >= 0;
+
+              // Calculated return amount on this investment based on Annual Return (%)
+              const calculatedReturn = invested * (annualReturnPercent / 100);
+              const isReturnPositive = calculatedReturn >= 0;
+
               return (
                 <div key={inv.id} className="fogo-card investing-holding-card">
                   {/* Card Top: Symbol, Name, Category */}
@@ -1075,34 +1090,46 @@ export default function InvestingDashboard({
                       </div>
                     </div>
 
-                    <div className="holding-actions-group">
+                    <div className="holding-top-right">
+                      <div className="holding-actions-group">
+                        <button
+                          type="button"
+                          className="holding-icon-btn highlight"
+                          onClick={() => handleOpenQuickAddModal(inv)}
+                          title="Add SIP Installment / Buy More Units"
+                        >
+                          <PlusCircle size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="holding-icon-btn"
+                          onClick={() => handleOpenEdit(inv)}
+                          title="Edit Holding"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="holding-icon-btn delete"
+                          onClick={() => {
+                            if (window.confirm(`Delete holding "${inv.name}"?`)) {
+                              onDeleteInvestment?.(inv.id);
+                            }
+                          }}
+                          title="Sell / Delete Holding"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+
                       <button
                         type="button"
-                        className="holding-icon-btn highlight"
-                        onClick={() => handleOpenQuickAddModal(inv)}
-                        title="Add SIP Installment / Buy More Units"
+                        className="holding-details-btn"
+                        onClick={() => setDetailsModalInv(inv)}
+                        title="View all details for this investment"
                       >
-                        <PlusCircle size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="holding-icon-btn"
-                        onClick={() => handleOpenEdit(inv)}
-                        title="Edit Holding"
-                      >
-                        <Edit2 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="holding-icon-btn delete"
-                        onClick={() => {
-                          if (window.confirm(`Delete holding "${inv.name}"?`)) {
-                            onDeleteInvestment?.(inv.id);
-                          }
-                        }}
-                        title="Sell / Delete Holding"
-                      >
-                        <Trash2 size={15} />
+                        <Eye size={13} />
+                        <span>View Details</span>
                       </button>
                     </div>
                   </div>
@@ -1127,6 +1154,20 @@ export default function InvestingDashboard({
                     <div className="holding-metric-item">
                       <span className="metric-label">Total Invested</span>
                       <strong className="metric-val">{formatCurrency(invested, symbol, { settings })}</strong>
+                    </div>
+
+                    <div className="holding-metric-item">
+                      <span className="metric-label">Annual Return (%)</span>
+                      <strong className={`metric-val ${isRatePositive ? 'text-emerald' : 'text-rose'}`}>
+                        {isRatePositive ? '+' : ''}{annualReturnPercent.toFixed(2)}%
+                      </strong>
+                    </div>
+
+                    <div className="holding-metric-item">
+                      <span className="metric-label">Investment Return</span>
+                      <strong className={`metric-val ${isReturnPositive ? 'text-emerald' : 'text-rose'}`}>
+                        {isReturnPositive ? '+' : ''}{formatCurrency(calculatedReturn, symbol, { settings })}
+                      </strong>
                     </div>
                   </div>
 
@@ -1551,6 +1592,266 @@ export default function InvestingDashboard({
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Investment Full Details Modal */}
+      {detailsModalInv && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="modal-overlay" 
+          onClick={() => setDetailsModalInv(null)}
+        >
+          <div 
+            className="add-tx-modal-dialog" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '620px' }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inv-details-modal-title"
+          >
+            {/* Modal Header */}
+            <div className="add-tx-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h2 id="inv-details-modal-title" className="add-tx-title">
+                  Investment Details
+                </h2>
+                {(() => {
+                  const cat = getInvestmentCategoryInfo(detailsModalInv.category);
+                  return (
+                    <span 
+                      className="add-tx-header-cat-pill"
+                      style={{
+                        background: `${cat.color}18`,
+                        color: cat.color,
+                        border: `1px solid ${cat.color}40`,
+                        boxShadow: `0 2px 8px ${cat.color}20`
+                      }}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.name}</span>
+                    </span>
+                  );
+                })()}
+                {detailsModalInv.investmentMode && (
+                  <span className="holding-mode-tag" style={{ fontSize: '0.74rem', padding: '0.15rem 0.55rem' }}>
+                    {detailsModalInv.investmentMode}
+                  </span>
+                )}
+              </div>
+              <button 
+                type="button" 
+                className="add-tx-close-btn" 
+                onClick={() => setDetailsModalInv(null)}
+                aria-label="Close"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="add-tx-body" style={{ gap: '1rem', maxHeight: 'calc(88vh - 120px)', overflowY: 'auto' }}>
+              {(() => {
+                const inv = detailsModalInv;
+                const cat = getInvestmentCategoryInfo(inv.category);
+                const units = Number(inv.units) || 0;
+                const buyPrice = Number(inv.buyPrice) || 0;
+                const curPrice = Number(inv.currentPrice) || buyPrice;
+                const invested = units * buyPrice;
+                const curVal = units * curPrice;
+                const profit = curVal - invested;
+                const roi = invested > 0 ? (profit / invested) * 100 : 0;
+                const isProfit = profit >= 0;
+
+                const hasExplicitRate = (inv.dividendYield !== undefined && inv.dividendYield !== null && inv.dividendYield !== '') ||
+                                        (inv.interestRate !== undefined && inv.interestRate !== null && inv.interestRate !== '');
+                const explicitRate = hasExplicitRate ? Number(inv.dividendYield !== undefined && inv.dividendYield !== null && inv.dividendYield !== '' ? inv.dividendYield : inv.interestRate) : NaN;
+                const annualReturnRate = (!isNaN(explicitRate) && explicitRate !== 0) ? explicitRate : roi;
+                const calculatedAnnualReturn = invested * (annualReturnRate / 100);
+
+                return (
+                  <>
+                    {/* Asset Identity Card */}
+                    <div 
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        background: 'var(--bg-app)',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1rem',
+                        flexWrap: 'wrap'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div 
+                          className="holding-ticker-badge" 
+                          style={{ borderColor: cat.color, fontSize: '0.95rem', padding: '0.35rem 0.75rem' }}
+                        >
+                          {inv.symbol || 'ASSET'}
+                        </div>
+                        <div>
+                          <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                            {inv.name}
+                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            <span>{cat.icon} {cat.name}</span>
+                            <span>•</span>
+                            <span>{inv.investmentMode || 'Holding'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`holding-roi-pill ${isProfit ? 'profit' : 'loss'}`} style={{ padding: '0.35rem 0.8rem', fontSize: '0.85rem' }}>
+                        {isProfit ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                        <span>{isProfit ? '+' : ''}{formatCurrency(profit, symbol, { settings })}</span>
+                        <span className="roi-percent">({isProfit ? '+' : ''}{roi.toFixed(2)}%)</span>
+                      </div>
+                    </div>
+
+                    {/* Valuation & Capital Overview Banner */}
+                    <div className="add-inv-preview-bar" style={{ marginTop: 0 }}>
+                      <div className="add-inv-preview-item">
+                        <span className="add-inv-preview-label">Total Invested</span>
+                        <strong className="add-inv-preview-val">{formatCurrency(invested, symbol, { settings })}</strong>
+                      </div>
+                      <div className="add-inv-preview-item">
+                        <span className="add-inv-preview-label">Current Valuation</span>
+                        <strong className="add-inv-preview-val" style={{ color: '#10b981' }}>{formatCurrency(curVal, symbol, { settings })}</strong>
+                      </div>
+                      <div className="add-inv-preview-item">
+                        <span className="add-inv-preview-label">Estimated P&L</span>
+                        <strong className={`add-inv-preview-val ${isProfit ? 'text-emerald' : 'text-rose'}`}>
+                          {isProfit ? '+' : ''}{formatCurrency(profit, symbol, { settings })}
+                          <span style={{ fontSize: '0.74rem', fontWeight: 650, marginLeft: '0.35rem' }}>
+                            ({isProfit ? '+' : ''}{roi.toFixed(2)}%)
+                          </span>
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Comprehensive Details 2-Column Grid */}
+                    <div 
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '0.75rem',
+                        background: 'var(--bg-app)',
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Holdings / Quantity</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{units.toLocaleString()} units</strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Average Buy NAV / Price</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{symbol}{buyPrice.toLocaleString()}</strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Current Market Price / NAV</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{symbol}{curPrice.toLocaleString()}</strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Investment Mode</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{inv.investmentMode || 'Standard'}</strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Annual Return (%)</span>
+                        <strong className={`metric-val ${annualReturnRate >= 0 ? 'text-emerald' : 'text-rose'}`} style={{ fontSize: '0.95rem' }}>
+                          {annualReturnRate >= 0 ? '+' : ''}{annualReturnRate.toFixed(2)}%
+                        </strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Investment Return</span>
+                        <strong className={`metric-val ${calculatedAnnualReturn >= 0 ? 'text-emerald' : 'text-rose'}`} style={{ fontSize: '0.95rem' }}>
+                          {calculatedAnnualReturn >= 0 ? '+' : ''}{formatCurrency(calculatedAnnualReturn, symbol, { settings })}
+                        </strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Investment Date</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{inv.date || 'Not recorded'}</strong>
+                      </div>
+
+                      <div className="holding-metric-item">
+                        <span className="metric-label">Maturity Date</span>
+                        <strong className="metric-val" style={{ fontSize: '0.95rem' }}>{inv.maturityDate || 'Open-ended (No expiry)'}</strong>
+                      </div>
+                    </div>
+
+                    {/* Folio & Strategy Notes (if any) */}
+                    <div 
+                      style={{
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
+                        background: 'var(--bg-app)',
+                        border: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.35rem'
+                      }}
+                    >
+                      <span className="metric-label">Folio No / Strategy Notes</span>
+                      <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5, fontStyle: inv.notes ? 'normal' : 'italic' }}>
+                        {inv.notes || 'No custom folio number or notes entered.'}
+                      </p>
+                    </div>
+
+                    {/* Quick Actions Footer inside Details Modal */}
+                    <div className="add-tx-footer" style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        className="add-tx-cancel-btn"
+                        onClick={() => setDetailsModalInv(null)}
+                      >
+                        Close
+                      </button>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          className="add-tx-cancel-btn"
+                          style={{ borderColor: 'var(--border-medium)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                          onClick={() => {
+                            const target = inv;
+                            setDetailsModalInv(null);
+                            handleOpenQuickAddModal(target);
+                          }}
+                        >
+                          <PlusCircle size={15} />
+                          <span>Add Units / SIP</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="add-tx-save-btn"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                          onClick={() => {
+                            const target = inv;
+                            setDetailsModalInv(null);
+                            handleOpenEdit(target);
+                          }}
+                        >
+                          <Edit2 size={15} />
+                          <span>Edit Holding</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>,
         document.body
