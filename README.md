@@ -51,29 +51,57 @@ A personal finance tracker web application with a **React frontend** and a **Jav
 
 ```
 Finance_tracker/
-├── frontend/                            # React 19 + Vite Frontend
+│
+├── frontend/                            # React 19 + Vite Application
+│   ├── public/                          # Static assets, vite.svg, PWA manifest
 │   ├── src/
-│   │   ├── components/                  # UI components, dashboard, modals, keypads
-│   │   ├── services/                    # storage.js, api.js, confetti.js
-│   │   ├── styles/                      # theme tokens, layout.css, components.css
+│   │   ├── assets/                      # Images, icons, logos
+│   │   ├── components/                  # Reusable UI (Navbar, Sidebar, Footer, ExpenseCard, IncomeCard, Modals)
+│   │   ├── pages/                       # Workspace & auth pages (Dashboard, Transactions, Reports, Goals, Investing, Login, Register, AddExpense, AddIncome, Profile)
+│   │   ├── services/                    # Backend API & persistence (api.js, authService.js, transactionService.js, storage.js)
+│   │   ├── context/                     # Global state management (AuthContext.jsx)
+│   │   ├── hooks/                       # Custom React hooks (useTabSwipe.js, useTheme.js)
+│   │   ├── utils/                       # Helper functions (formatCurrency.js)
+│   │   ├── styles/                      # Theme tokens & responsive CSS
 │   │   ├── App.jsx                      # Main app coordinator
-│   │   └── main.jsx                     # React entrypoint
-│   ├── public/                          # Favicon, icons, PWA manifest
-│   ├── package.json                     # Frontend npm dependencies (React 19, Lucide, Vite)
-│   ├── vite.config.js                   # Vite configuration with /api proxy to port 8080
-│   └── index.html                       # HTML template
+│   │   ├── main.jsx                     # React entrypoint
+│   │   └── App.css
+│   ├── .env
+│   ├── package.json
+│   └── vite.config.js
 │
-├── backend/                             # Java 21 REST API Backend
-│   ├── src/com/financetracker/
-│   │   └── FinanceServer.java           # Java 21 HTTP REST Server with virtual threads
-│   ├── data/                            # Persistent JSON database (transactions, goals, settings)
-│   ├── out/                             # Compiled Java bytecode (.class)
-│   └── run.bat                          # One-click script to compile and run Java backend
+├── backend/                             # Java 21 REST API & MongoDB Backend
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/finance/
+│   │   │   │   ├── config/              # SecurityConfig.java
+│   │   │   │   ├── controller/          # AuthController, TransactionController, DashboardController, Goal/Investment/Sync/Settings/Health Controllers
+│   │   │   │   ├── service/             # AuthService, TransactionService, DashboardService, FinanceService, MongoDBService, StorageService
+│   │   │   │   ├── repository/          # UserRepository, TransactionRepository
+│   │   │   │   ├── model/               # User, Transaction
+│   │   │   │   ├── dto/                 # LoginRequest, RegisterRequest
+│   │   │   │   ├── exception/           # GlobalExceptionHandler
+│   │   │   │   └── FinanceApplication.java
+│   │   │   └── resources/
+│   │   │       └── application.properties
+│   │   └── test/
+│   │       └── java/com/finance/        # FinanceApplicationTest.java
+│   ├── data/                            # Local JSON fallback storage
+│   ├── lib/                             # MongoDB Java driver JARs
+│   ├── pom.xml                          # Maven project metadata
+│   ├── run.bat                          # One-click javac compile & run launcher
+│   └── .gitignore
 │
-├── start-all.bat                        # One-click launcher to start BOTH frontend & backend
-├── start-frontend.bat                   # One-click launcher for frontend on http://localhost:3000
-├── start-backend.bat                    # One-click launcher for backend on http://localhost:8080
-└── package.json                         # Root package with unified dev, build, and backend scripts
+├── database/                            # Database documentation & seed data
+│   ├── collections.md
+│   └── sample-data.json
+│
+├── start-all.bat                        # Launch BOTH frontend & backend
+├── start-frontend.bat                   # Launch frontend on http://localhost:3000
+├── start-backend.bat                    # Launch backend on http://localhost:8080
+├── package.json                         # Root workspace scripts
+├── README.md
+└── .gitignore
 ```
 
 ---

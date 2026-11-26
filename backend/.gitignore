@@ -1,0 +1,10 @@
+# Compiled outputs
+out/
+target/
+*.class
+sources.txt
+
+# Logs & OS files
+*.log
+.DS_Store
+Thumbs.db

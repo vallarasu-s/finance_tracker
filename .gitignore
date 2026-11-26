@@ -12,11 +12,13 @@ node_modules
 dist
 dist-ssr
 *.local
+frontend/.env.local
 frontend/node_modules
 frontend/dist
 
 # Java Backend
 backend/out
+backend/target
 *.class
 
 # Editor directories and files

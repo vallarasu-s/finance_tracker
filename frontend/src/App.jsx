@@ -1,23 +1,26 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
-import Navbar from './components/Navbar';
-import Dashboard from './components/Dashboard';
-import DailyTransactions from './components/DailyTransactions';
-import FinancialGoals from './components/FinancialGoals';
-import Analytics from './components/Analytics';
-import InvestingDashboard from './components/InvestingDashboard';
+import Footer from './components/Footer';
+import Dashboard from './pages/Dashboard';
+import Transactions from './pages/Transactions';
+import Goals from './pages/Goals';
+import Reports from './pages/Reports';
+import Investing from './pages/Investing';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import TransactionModal from './components/TransactionModal';
 import GoalModal from './components/GoalModal';
 import GoalDepositModal from './components/GoalDepositModal';
 import DataBackupModal from './components/DataBackupModal';
 import ToastContainer from './components/ToastContainer';
-import LoginForm from './components/LoginForm';
-import NavDrawer from './components/NavDrawer';
 import SettingsModal from './components/SettingsModal';
 import HelpModal from './components/HelpModal';
 import GoalDetailModal from './components/GoalDetailModal';
 import ConfirmModal from './components/ConfirmModal';
+import { useAuth } from './context/AuthContext';
+import { useTabSwipe } from './hooks/useTabSwipe';
+import { useTheme } from './hooks/useTheme';
 
 import {
   getTransactions,
@@ -35,8 +38,6 @@ import {
   getSettings,
   saveSettings,
   resetAllData,
-  getCurrentUser,
-  logoutUser,
   getDailyTodos,
   saveDailyTodos,
   DEFAULT_DAILY_TODOS,
@@ -84,8 +85,9 @@ export default function App() {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  // User Auth State
-  const [currentUser, setCurrentUser] = useState(getCurrentUser());
+  // User Auth State (from AuthContext)
+  const { currentUser, setCurrentUser, logout } = useAuth();
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
 
   // Toasts (declared early so they are accessible by navigation and login handlers)
   const [toasts, setToasts] = useState([]);
@@ -111,8 +113,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    logoutUser();
-    setCurrentUser(null);
+    logout();
+    setAuthMode('login');
     showToast('Logged out of Finance Tracker.', 'info');
   };
 
@@ -400,42 +402,6 @@ export default function App() {
     };
   }, [activeTab, handleTabSwitch]);
 
-  // Check if target is inside an element that shouldn't trigger swipe (e.g. horizontally scrollable table)
-  const isScrollableHorizontal = useCallback((element) => {
-    let curr = element;
-    while (curr && curr !== document.body && curr !== contentAreaRef.current) {
-      if (
-        curr.classList?.contains('fogo-main-nav-tabs') ||
-        curr.classList?.contains('fogo-main-nav-tab-btn') ||
-        curr.classList?.contains('fogo-main-nav-container') ||
-        curr.classList?.contains('fogo-mobile-tab-indicator')
-      ) {
-        return false;
-      }
-      if (
-        curr.classList?.contains('modal-overlay') ||
-        curr.classList?.contains('fogo-modal') ||
-        (curr.tagName === 'INPUT' && curr.type === 'range')
-      ) {
-        return true;
-      }
-      if (curr.scrollWidth > curr.clientWidth + 20) {
-        const style = window.getComputedStyle(curr);
-        const overflowX = style.overflowX;
-        if (overflowX === 'auto' || overflowX === 'scroll') {
-          return true;
-        }
-      }
-      curr = curr.parentElement;
-    }
-    return false;
-  }, []);
-
-  // Touch Swipe Gesture State (Swipe Left -> Next Tab, Swipe Right -> Prev Tab)
-  const touchStartPos = useRef({ x: 0, y: 0, time: 0 });
-  const isHorizontalSwipe = useRef(false);
-  const isSwipeCanceled = useRef(false);
-
   const isAnyModalOpen =
     txModalState.isOpen ||
     goalModalState.isOpen ||
@@ -446,81 +412,17 @@ export default function App() {
     isSettingsModalOpen ||
     isNavDrawerOpen;
 
-  const handleTouchStart = (e) => {
-    if (isAnyModalOpen || e.touches.length !== 1) {
-      isSwipeCanceled.current = true;
-      return;
-    }
-
-    const touch = e.touches[0];
-    if (touch.clientX < 15 || touch.clientX > window.innerWidth - 15) {
-      isSwipeCanceled.current = true;
-      return;
-    }
-
-    if (isScrollableHorizontal(e.target)) {
-      isSwipeCanceled.current = true;
-      return;
-    }
-
-    touchStartPos.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-      time: Date.now()
-    };
-    isHorizontalSwipe.current = false;
-    isSwipeCanceled.current = false;
-  };
-
-  const handleTouchMove = (e) => {
-    if (isSwipeCanceled.current || e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    const dx = touch.clientX - touchStartPos.current.x;
-    const dy = touch.clientY - touchStartPos.current.y;
-
-    if (!isHorizontalSwipe.current) {
-      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
-        isSwipeCanceled.current = true;
-        return;
-      }
-      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-        isHorizontalSwipe.current = true;
-      }
-    }
-  };
-
-  const handleTouchEnd = (e) => {
-    if (isSwipeCanceled.current || !isHorizontalSwipe.current || !e.changedTouches.length) {
-      isHorizontalSwipe.current = false;
-      isSwipeCanceled.current = false;
-      return;
-    }
-
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - touchStartPos.current.x;
-    const dy = touch.clientY - touchStartPos.current.y;
-    const dt = Date.now() - touchStartPos.current.time;
-
-    const isQuickSwipe = dt < 650 && Math.abs(dx) >= 40;
-    const isLongSwipe = Math.abs(dx) >= 75;
-
-    if ((isQuickSwipe || isLongSwipe) && Math.abs(dx) > Math.abs(dy) * 1.25) {
-      if (dx < 0) {
-        goToNextTab();
-      } else {
-        goToPrevTab();
-      }
-    }
-
-    isHorizontalSwipe.current = false;
-    isSwipeCanceled.current = false;
-  };
-
-  const handleTouchCancel = () => {
-    isHorizontalSwipe.current = false;
-    isSwipeCanceled.current = false;
-  };
+  const {
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
+  } = useTabSwipe({
+    contentAreaRef,
+    isModalOpen: isAnyModalOpen,
+    onNextTab: goToNextTab,
+    onPrevTab: goToPrevTab,
+  });
 
   // Load initial local data scoped to current user
   const reloadData = useCallback(() => {
@@ -575,7 +477,7 @@ export default function App() {
     } catch (err) {
       console.warn('Initial cloud data fetch:', err);
     }
-  }, [showToast]);
+  }, [showToast, setCurrentUser]);
 
   // Network & Java Backend Health Check
   const checkHealth = useCallback(async () => {
@@ -912,21 +814,8 @@ export default function App() {
     }
   }, [showToast, isOnline]);
 
-  // Dynamically update document title and favicon when currency symbol changes
-  useEffect(() => {
-    const sym = settings.currencySymbol || '₹';
-    document.title = `${sym} Finance Manager`;
-
-    // Dynamically update browser favicon with active currency symbol
-    const faviconEl = document.getElementById('app-favicon') || document.querySelector("link[rel*='icon']");
-    if (faviconEl) {
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
-        <rect width='32' height='32' rx='8' fill='#10b981'/>
-        <text x='50%' y='68%' font-size='18' font-weight='bold' font-family='system-ui, sans-serif' fill='white' text-anchor='middle'>${sym}</text>
-      </svg>`;
-      faviconEl.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-    }
-  }, [settings.currencySymbol]);
+  // Synchronize theme, document title, and dynamic currency favicon
+  useTheme(settings);
 
   // Update Settings
   const handleUpdateSettings = (newSettings) => {
@@ -1003,14 +892,16 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, openTxModal, openGoalModal, closeTxModal, closeGoalModal, closeDepositModal, closeBackupModal, closeHelpModal, closeConfirmModal]);
 
-  // If user is not logged in, show the Login Form
+  // If user is not logged in, show Login or Register page
   if (!currentUser) {
+    const AuthPage = authMode === 'register' ? Register : Login;
     return (
       <div className="app-container">
-        <LoginForm
+        <AuthPage
           onLogin={handleLogin}
           settings={settings}
           onUpdateSettings={handleUpdateSettings}
+          onSwitchMode={setAuthMode}
         />
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </div>
@@ -1228,7 +1119,7 @@ export default function App() {
             )}
 
             {activeTab === 'transactions' && (
-              <DailyTransactions
+              <Transactions
                 transactions={transactions}
                 settings={settings}
                 onOpenTransactionModal={(type = 'expense', tx = null) => openTxModal(type, tx)}
@@ -1238,7 +1129,7 @@ export default function App() {
             )}
 
             {activeTab === 'analytics' && (
-              <Analytics
+              <Reports
                 transactions={transactions}
                 goals={goals}
                 settings={settings}
@@ -1250,7 +1141,7 @@ export default function App() {
             )}
 
             {activeTab === 'goals' && (
-              <FinancialGoals
+              <Goals
                 goals={goals}
                 settings={settings}
                 onOpenGoalDetail={(goal) => openGoalDetailModal(goal)}
@@ -1261,7 +1152,7 @@ export default function App() {
             )}
 
             {activeTab === 'investing' && (
-              <InvestingDashboard
+              <Investing
                 investments={investments}
                 settings={settings}
                 onAddInvestment={handleAddInvestment}
@@ -1273,6 +1164,7 @@ export default function App() {
             )}
           </div>
         </main>
+        <Footer isOnline={isOnline} onOpenHelp={() => openHelpModal('getting-started')} />
       </div>
 
       {/* Modals */}

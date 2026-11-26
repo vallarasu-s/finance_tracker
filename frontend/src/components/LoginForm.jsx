@@ -14,10 +14,15 @@ import {
   Moon,
   Zap
 } from 'lucide-react';
-import { loginUser, registerUser, DEFAULT_USER } from '../services/storage';
+import { loginUser, registerUser, DEFAULT_USER } from '../services/authService';
 
-export default function LoginForm({ onLogin, settings, onUpdateSettings }) {
-  const [isRegister, setIsRegister] = useState(false);
+export default function LoginForm({ onLogin, settings, onUpdateSettings, initialMode = 'login', onSwitchMode }) {
+  const [isRegister, setIsRegister] = useState(initialMode === 'register');
+
+  React.useEffect(() => {
+    setIsRegister(initialMode === 'register');
+    setError('');
+  }, [initialMode]);
   const [formData, setFormData] = useState({
     name: '',
     identifier: '',
@@ -173,7 +178,11 @@ export default function LoginForm({ onLogin, settings, onUpdateSettings }) {
               role="tab"
               aria-selected={!isRegister}
               className={`auth-tab ${!isRegister ? 'active' : ''}`}
-              onClick={() => { setIsRegister(false); setError(''); }}
+              onClick={() => {
+                setIsRegister(false);
+                setError('');
+                onSwitchMode?.('login');
+              }}
             >
               Sign In
             </button>
@@ -182,7 +191,11 @@ export default function LoginForm({ onLogin, settings, onUpdateSettings }) {
               role="tab"
               aria-selected={isRegister}
               className={`auth-tab ${isRegister ? 'active' : ''}`}
-              onClick={() => { setIsRegister(true); setError(''); }}
+              onClick={() => {
+                setIsRegister(true);
+                setError('');
+                onSwitchMode?.('register');
+              }}
             >
               Create Account
             </button>

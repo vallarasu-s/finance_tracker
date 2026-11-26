@@ -6,7 +6,7 @@
 // - App Settings & Formatting Preferences
 // - Full Database Synchronization
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env?.VITE_API_BASE_URL || '/api';
 
 /**
  * Check Java server and MongoDB connection health

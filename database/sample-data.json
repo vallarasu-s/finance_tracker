@@ -1,0 +1,76 @@
+{
+  "database": "finance_tracker",
+  "collections": {
+    "users": [
+      {
+        "id": "ft_default_user",
+        "name": "Finance Tracker",
+        "username": "financetracker",
+        "email": "financetracker@example.com",
+        "role": "Primary Account",
+        "avatar": "FT",
+        "joinedDate": "2026-01-01"
+      }
+    ],
+    "transactions": [
+      {
+        "id": "tx_sample_1",
+        "type": "income",
+        "amount": 90000.0,
+        "recipient": "Employer Inc.",
+        "category": "salary",
+        "paymentMethod": "bank",
+        "date": "2026-11-01",
+        "time": "09:00",
+        "note": "Monthly salary credit"
+      },
+      {
+        "id": "tx_sample_2",
+        "type": "expense",
+        "amount": 1250.0,
+        "recipient": "Fresh Mart",
+        "category": "food",
+        "paymentMethod": "upi",
+        "date": "2026-11-05",
+        "time": "18:30",
+        "note": "Weekly groceries and pantry supplies"
+      }
+    ],
+    "goals": [
+      {
+        "id": "goal_sample_1",
+        "title": "Emergency Rainy Day Fund",
+        "targetAmount": 100000,
+        "currentAmount": 45000,
+        "targetDate": "2027-06-30",
+        "category": "emergency",
+        "icon": "🛡️",
+        "notes": "6 months living expense reserve"
+      }
+    ],
+    "investments": [
+      {
+        "id": "inv_sample_1",
+        "name": "Parag Parikh Flexi Cap Fund - Direct Growth",
+        "symbol": "PPFC-DIR",
+        "category": "mutual_funds",
+        "investmentMode": "Monthly SIP",
+        "units": 250,
+        "buyPrice": 62.4,
+        "currentPrice": 84.8,
+        "dividendYield": 15.5,
+        "date": "2024-03-15",
+        "notes": "Core equity mutual fund"
+      }
+    ],
+    "settings": {
+      "id": "user_settings",
+      "currency": "INR",
+      "currencySymbol": "₹",
+      "monthlyBudget": 50000,
+      "theme": "light",
+      "compactNumbers": true,
+      "numberFormat": "auto"
+    }
+  }
+}
